@@ -209,8 +209,11 @@ dmypy.json
 #######################
 # Unique to this repo #
 #######################
-scripts/zippedPackages/*
-!scripts/zippedPackages/.gitkeep
+scripts/zippedPythonPackages/*
+!scripts/zippedPythonPackages/.gitkeep
+
+scripts/zippedLambdaFunction/*
+!scripts/zippedLambdaFunction/.gitkeep
 
 *reddit.cfg
 !example_reddit.cfg
