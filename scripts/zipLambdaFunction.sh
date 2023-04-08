@@ -20,6 +20,7 @@ cp -r ../../lambdaFunctions/${function_name} ./
 cp ../../reddit.cfg ./${function_name}/
 rm -rf ${function_name}.zip # remove first if it exists
 cd ./${function_name}/  # for some reason you have to zip from within this folder or it wont work, it otherwise wraps it in another folder
-zip -r ../${function_name}.zip *    # zip of function and the reddit config
+#rm -rf ./*.ipynb*  # remove any notebook stuff
+zip -r ../${function_name}.zip * -x "*.ipynb*" "*pycache*"    # zip of function and the reddit config
 cd ..
 rm -r ./${function_name}  # clean up unzipped file
