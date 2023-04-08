@@ -24,11 +24,11 @@ def lambda_handler(event, context):
     username=f"{USERNAME}",
   )
 
-  risingData = utils.getRising(reddit, subreddit, 25)
+  risingData = utils.getRedditData(reddit, subreddit, 25)
 
   # Push to DynamoDB
-  risingStagingTableDefinition = tabledefinitions.risingTableDefinition.risingStagingTableDefinition
+  risingRawTableDefinition = tabledefinitions.risingTableDefinition.risingRawTableDefinition
   risingSchema = tabledefinitions.risingTableDefinition.risingSchema
-  risingTable = utils.getOrCreateTable(risingStagingTableDefinition, dynamodb_resource)
+  risingTable = utils.getOrCreateTable(risingRawTableDefinition, dynamodb_resource)
   utils.batchWriter(risingTable, risingData, risingSchema)
   return 200

@@ -1,26 +1,26 @@
 from collections import OrderedDict
 
 
-risingSchema = OrderedDict()
-risingSchema["postId"] = "S"
-risingSchema["subreddit"] = "S"
-risingSchema["title"] = "S"
-risingSchema["createdUTC"] = "S"
-risingSchema["timeElapsedMin"] = "N"
-risingSchema["score"] = "N"
-risingSchema["numComments"] = "N"
-risingSchema["upvoteRatio"] = "N"
-risingSchema["numGildings"] = "N"
-risingSchema["loadTimeUTC"] = "S"
-risingSchema["loadDateUTC"] = "S"
+hotSchema = OrderedDict()
+hotSchema["postId"] = "S"
+hotSchema["subreddit"] = "S"
+hotSchema["title"] = "S"
+hotSchema["createdUTC"] = "S"
+hotSchema["timeElapsedMin"] = "N"
+hotSchema["score"] = "N"
+hotSchema["numComments"] = "N"
+hotSchema["upvoteRatio"] = "N"
+hotSchema["numGildings"] = "N"
+hotSchema["loadTimeUTC"] = "S"
+hotSchema["loadDateUTC"] = "S"
 
-tableName = "risingRaw"
+tableName = "hotRaw"
 
-risingRawTableDefinition = dict(
+hotRawTableDefinition = dict(
   AttributeDefinitions=[
     {
       'AttributeName': k,
-      'AttributeType': risingSchema[k]
+      'AttributeType': hotSchema[k]
     } for k in ['postId', 'loadTimeUTC', 'subreddit']  # only need to define the ones that are used in key and sort
   ],
   TableName=tableName,
@@ -59,8 +59,8 @@ risingRawTableDefinition = dict(
   ],
   BillingMode='PROVISIONED',  # recommended for consistent work
   ProvisionedThroughput={  # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ServiceQuotas.html#default-limits-throughput-capacity-modes
-      'ReadCapacityUnits': 4,
-      'WriteCapacityUnits': 4
+      'ReadCapacityUnits': 2,
+      'WriteCapacityUnits': 2
   },
   TableClass='STANDARD',
   DeletionProtectionEnabled=False

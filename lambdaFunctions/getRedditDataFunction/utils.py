@@ -25,10 +25,20 @@ def parseConfig(cfg_file: str) -> dict:
   return cfg
 
 
-def getRising(reddit, subreddit, topN=25, risingSchema=risingTableDefinition.risingSchema, verbose=False):
-  topN = reddit.subreddit(subreddit).rising(limit=topN)  # rising caps out at 25
+def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableDefinition.risingSchema, time_filter=None, verbose=False):
+  assert topN <= 25  # some, like rising, cap out at 25 and this also is to limit data you're working with
+  assert view in {'rising', 'top' , 'hot'}
+  if view == 'top':
+    assert time_filter in {"all", "day", "hour", "month", "week", "year"}
+  if view == 'rising':
+    topN = reddit.subreddit(subreddit).rising(limit=topN)
+  elif view == 'hot':
+    topN = reddit.subreddit(subreddit).hot(limit=topN)
+  elif view == 'top':
+    topN = reddit.subreddit(subreddit).top(time_filter=time_filter, limit=topN)
+
   now = datetime.utcnow().replace(tzinfo=None)
-  columns = risingSchema.keys()
+  columns = schema.keys()
   Row = namedtuple("Row", columns)
   dataCollected = []
   for submission in topN:
