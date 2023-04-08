@@ -25,7 +25,7 @@ def parseConfig(cfg_file: str) -> dict:
   return cfg
 
 
-def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableDefinition.risingSchema, time_filter=None, verbose=False):
+def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableDefinition.schema, time_filter=None, verbose=False):
   assert topN <= 25  # some, like rising, cap out at 25 and this also is to limit data you're working with
   assert view in {'rising', 'top' , 'hot'}
   if view == 'top':
@@ -44,7 +44,7 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableD
   for submission in topN:
     createdUTC = datetime.utcfromtimestamp(submission.created_utc)
     timeElapsedMin = (now - createdUTC).seconds // 60
-    if timeElapsedMin >= 120:
+    if view=='rising' and timeElapsedMin > 60:  # sometime rising has some data that's already older than an hour, we don't want that
       continue
     postId = submission.id
     title = submission.title

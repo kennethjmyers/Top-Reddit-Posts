@@ -1,26 +1,26 @@
 from collections import OrderedDict
 
 
-hotSchema = OrderedDict()
-hotSchema["postId"] = "S"
-hotSchema["subreddit"] = "S"
-hotSchema["title"] = "S"
-hotSchema["createdUTC"] = "S"
-hotSchema["timeElapsedMin"] = "N"
-hotSchema["score"] = "N"
-hotSchema["numComments"] = "N"
-hotSchema["upvoteRatio"] = "N"
-hotSchema["numGildings"] = "N"
-hotSchema["loadTimeUTC"] = "S"
-hotSchema["loadDateUTC"] = "S"
+schema = OrderedDict()
+schema["postId"] = "S"
+schema["subreddit"] = "S"
+schema["title"] = "S"
+schema["createdUTC"] = "S"
+schema["timeElapsedMin"] = "N"
+schema["score"] = "N"
+schema["numComments"] = "N"
+schema["upvoteRatio"] = "N"
+schema["numGildings"] = "N"
+schema["loadTimeUTC"] = "S"
+schema["loadDateUTC"] = "S"
 
-tableName = "hotRaw"
+tableName = "hot"
 
-hotRawTableDefinition = dict(
+tableDefinition = dict(
   AttributeDefinitions=[
     {
       'AttributeName': k,
-      'AttributeType': hotSchema[k]
+      'AttributeType': schema[k]
     } for k in ['postId', 'loadTimeUTC', 'subreddit']  # only need to define the ones that are used in key and sort
   ],
   TableName=tableName,

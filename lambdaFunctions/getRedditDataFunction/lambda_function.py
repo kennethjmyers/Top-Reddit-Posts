@@ -1,12 +1,15 @@
 import utils
 import praw
 import boto3
-import tabledefinitions
+from tabledefinitions import hotTableDefinition
+from tabledefinitions import risingTableDefinition
+
 
 dynamodb_resource = boto3.resource('dynamodb')
 
+
 def lambda_handler(event, context):
-  # Get Reddit Data
+  # Initializations
   subreddit = "pics"
   cfg_file = utils.findConfig()
   cfg = utils.parseConfig(cfg_file)
@@ -24,11 +27,26 @@ def lambda_handler(event, context):
     username=f"{USERNAME}",
   )
 
-  risingData = utils.getRedditData(reddit, subreddit, 25)
+  # Get Rising Reddit data
+  risingSchema = risingTableDefinition.schema
+  topN = 25
+  view = 'rising'
+  risingData = utils.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=risingSchema, topN=topN)
 
   # Push to DynamoDB
-  risingRawTableDefinition = tabledefinitions.risingTableDefinition.risingRawTableDefinition
-  risingSchema = tabledefinitions.risingTableDefinition.risingSchema
+  risingRawTableDefinition = risingTableDefinition.tableDefinition
   risingTable = utils.getOrCreateTable(risingRawTableDefinition, dynamodb_resource)
   utils.batchWriter(risingTable, risingData, risingSchema)
+
+  # Get Hot Reddit data
+  hotSchema = hotTableDefinition.schema
+  topN = 3
+  view = 'hot'
+  hotData = utils.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=hotSchema, topN=topN)
+
+  # Push to DynamoDB
+  hotRawTableDefinition = hotTableDefinition.tableDefinition
+  hotTable = utils.getOrCreateTable(hotRawTableDefinition, dynamodb_resource)
+  utils.batchWriter(hotTable, hotData, hotSchema)
+
   return 200
