@@ -2,7 +2,7 @@ from datetime import datetime
 from configparser import ConfigParser
 import os
 from collections import namedtuple
-from tabledefinitions import risingTableDefinition
+import tableDefinition
 import json
 from decimal import Decimal
 
@@ -25,7 +25,7 @@ def parseConfig(cfg_file: str) -> dict:
   return cfg
 
 
-def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableDefinition.schema, time_filter=None, verbose=False):
+def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinition.schema, time_filter=None, verbose=False):
   assert topN <= 25  # some, like rising, cap out at 25 and this also is to limit data you're working with
   assert view in {'rising', 'top' , 'hot'}
   if view == 'top':
@@ -37,13 +37,13 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableD
   elif view == 'top':
     topN = reddit.subreddit(subreddit).top(time_filter=time_filter, limit=topN)
 
-  now = datetime.utcnow().replace(tzinfo=None)
+  now = datetime.utcnow().replace(tzinfo=None, microsecond=0)
   columns = schema.keys()
   Row = namedtuple("Row", columns)
   dataCollected = []
   for submission in topN:
-    createdUTC = datetime.utcfromtimestamp(submission.created_utc)
-    timeElapsedMin = (now - createdUTC).seconds // 60
+    createdTSUTC = datetime.utcfromtimestamp(submission.created_utc)
+    timeElapsedMin = (now - createdTSUTC).seconds // 60
     if view=='rising' and timeElapsedMin > 60:  # sometime rising has some data that's already older than an hour, we don't want that
       continue
     postId = submission.id
@@ -54,9 +54,10 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=risingTableD
     gildings = submission.gildings
     numGildings = sum(gildings.values())
     row = Row(
-      postId=postId, subreddit=subreddit, title=title, createdUTC=str(createdUTC),
+      postId=postId, subreddit=subreddit, title=title, createdTSUTC=str(createdTSUTC),
       timeElapsedMin=timeElapsedMin, score=score, numComments=numComments,
-      upvoteRatio=upvoteRatio, numGildings=numGildings, loadTimeUTC=str(now), loadDateUTC=str(now.date()))
+      upvoteRatio=upvoteRatio, numGildings=numGildings,
+      loadTSUTC=str(now), loadDateUTC=str(now.date()), loadTimeUTC=str(now.time()))
     dataCollected.append(row)
     if verbose:
       print(row)
