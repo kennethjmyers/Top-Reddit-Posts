@@ -5,6 +5,7 @@ from pyspark.sql import DataFrame
 from schema import fromDynamoConversion, toSparkSchema
 from functools import reduce
 from boto3.dynamodb.conditions import  Key
+import pyspark.sql.functions as F
 
 
 def findConfig() -> str:
@@ -77,3 +78,31 @@ def getPostIdSparkDataFrame(spark, table, postIds: list, flatten: bool = True):
     return reduce(DataFrame.union, dataFrames)
   else:
     return dataFrames
+
+
+def applyDataTransformations(postIdData):
+  return (
+    postIdData
+      .groupBy('postId', 'subreddit', 'title', 'createdTSUTC')
+      .agg(
+      F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('score'))).alias('maxScore20m')
+      , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('score'))).alias('maxScore21_40m')
+      , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('score'))).alias('maxScore41_60m')
+      , F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('numComments'))).alias('maxNumComments20m')
+      , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('numComments'))).alias('maxNumComments21_40m')
+      , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('numComments'))).alias('maxNumComments41_60m')
+      , F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('upvoteRatio'))).alias('maxUpvoteRatio20m')
+      , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('upvoteRatio'))).alias('maxUpvoteRatio21_40m')
+      , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('upvoteRatio'))).alias('maxUpvoteRatio41_60m')
+      , F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('numGildings'))).alias('maxNumGildings20m')
+      , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('numGildings'))).alias('maxNumGildings21_40m')
+      , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('numGildings'))).alias('maxNumGildings41_60m')
+    )
+  )
+
+
+def getTarget(postId:str, uniqueHotPostIds:set):
+  if postId in uniqueHotPostIds:
+    return 1
+  else:
+    return 0
