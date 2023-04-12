@@ -1,3 +1,4 @@
+boto3==1.26.111
 nbstripout==0.6.1
 pre-commit==2.21.0
 praw==7.7.0
