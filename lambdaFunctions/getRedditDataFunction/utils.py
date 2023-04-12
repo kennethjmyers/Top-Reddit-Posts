@@ -43,8 +43,10 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinit
   dataCollected = []
   for submission in topN:
     createdTSUTC = datetime.utcfromtimestamp(submission.created_utc)
-    timeElapsedMin = (now - createdTSUTC).seconds // 60
-    if view=='rising' and timeElapsedMin > 60:  # sometime rising has some data that's already older than an hour, we don't want that
+    timeSincePost = now - createdTSUTC
+    timeElapsedMin = timeSincePost.seconds // 60
+    timeElapsedDays = timeSincePost.days
+    if view=='rising' and (timeElapsedMin > 60 or timeElapsedDays>0):  # sometime rising has some data that's already older than an hour or day, we don't want that
       continue
     postId = submission.id
     title = submission.title

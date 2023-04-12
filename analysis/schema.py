@@ -2,15 +2,16 @@
 from pyspark.sql.types import StructType,StructField, StringType, IntegerType, TimestampType, FloatType
 from datetime import datetime
 
+
 # functions to convert data on read
 fromDynamoConversion = {
-  'loadDateUTC': lambda x: datetime.strptime(x, '%Y-%d-%m'),
+  'loadDateUTC': lambda x: datetime.strptime(x, '%Y-%m-%d'),
   'loadTimeUTC': lambda x: datetime.strptime(x, '%H:%M:%S'),
-  'loadTSUTC': lambda x: datetime.strptime(x, '%Y-%d-%m %H:%M:%S'),
+  'loadTSUTC': lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
   'postId': str,
   'subreddit': str,
   'title': str,
-  'createdTSUTC': lambda x: datetime.strptime(x, '%Y-%d-%m %H:%M:%S'),
+  'createdTSUTC': lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
   'timeElapsedMin': int,
   'score': int,
   'numComments': int,
