@@ -68,7 +68,19 @@ def getPostIdData(table, postId):
   )['Items']
 
 
-def getPostIdSparkDataFrame(spark, table, postIds: list, flatten: bool = True):
+def getPostIdSparkDataFrame(spark, table, postIds: set, flatten: bool = True):
+  """
+  Read from dynamo table the data for each postId in postIds.
+  Optional flattening of data to single DataFrame before return
+
+  There might be a more efficient way to stream dynamo data to spark, but this got the job done
+
+  :param spark: sparksession
+  :param table: dynamodb table to query from
+  :param postIds: set of postids to query
+  :param flatten: option to flatten data before return
+  :return: list[DataFrame]|DataFrame
+  """
   dataFrames = []
   for postId in postIds:
     res = getPostIdData(table, postId)

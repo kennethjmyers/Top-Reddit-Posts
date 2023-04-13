@@ -2,9 +2,13 @@
 # The issue is now patched but there was now bad data in dynamo that had to be cleaned.
 
 import boto3
-import utils
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
+import sys
+import os
+thisLocation = os.getcwd()
+sys.path.append(thisLocation+'/../../model/')  # this is for importing model utils
+import utils
 
 
 session = boto3.Session(profile_name='AdministratorAccess', region_name='us-east-2')
