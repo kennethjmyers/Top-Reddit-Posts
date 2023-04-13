@@ -25,5 +25,5 @@ This project collects data from rising posts on Reddit and identify features tha
 
 1. Check out the [Getting Started](https://github.com/kennethjmyers/Top-Reddit-Posts/wiki/Getting-Started) section of the wiki for setting up your AWS account and local environment.
 2. [Lambda function](./lambdaFunctions/getRedditDataFunction/) to collect data and store in DynamoDB. See [the Wiki](https://github.com/kennethjmyers/Top-Reddit-Posts/wiki/Lambda-Function---getRedditDataFunction) for setup instructions.
-3. [ETL](model/dynamoETL.py), [Analysis](./model/univariateAnalysis/univariateAnalysis.md) and Model creation. ETL performed in Spark to scale with growing data. Model data and Model stored on S3. 
+3. [ETL](model/dynamoETL.py), [Analysis](./model/univariateAnalysis/univariateAnalysis.md) and [Model creation](./model/model/model.md). ETL performed in Spark to scale with growing data. Model data and Model stored on S3. 
 4. Lambda function that automates ETL process, stage new data to Postgres database on RDS and send notifications via SNS.
