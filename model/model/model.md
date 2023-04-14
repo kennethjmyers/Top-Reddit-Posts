@@ -110,6 +110,8 @@ def plotPrecRecAUCPR(X_train, y_train, X_test, y_test):
   axes[0,2].set_ylabel('precisions')
 
   plt.show()
+  
+  return y_pred_proba
 ```
 
 
@@ -144,7 +146,7 @@ sss = StratifiedShuffleSplit(n_splits=1, train_size=0.8, test_size=0.2, random_s
 train_index, test_index = next(sss.split(X,y))
 X_train, y_train, X_test, y_test = X.iloc[train_index], y.iloc[train_index], X.iloc[test_index], y.iloc[test_index]
 
-plotPrecRecAUCPR(X_train, y_train, X_test, y_test)
+y_pred_proba = plotPrecRecAUCPR(X_train, y_train, X_test, y_test)
 ```
 
     total posts: 1047, viral posts: 26
@@ -177,16 +179,16 @@ sorted(list(zip(y_pred_proba, y_test)), key=lambda x:x[0])[::-1][:10]
 
 
 
-    [(0.06020266659787673, 0),
-     (0.05240396880412406, 0),
-     (0.04298745870651433, 0),
-     (0.039768110456671474, 0),
-     (0.03874993953016156, 0),
-     (0.037285632209419654, 0),
-     (0.03566623960759841, 0),
-     (0.03525635766580686, 0),
-     (0.035088343739840225, 0),
-     (0.03348198975346211, 0)]
+    [(0.999996552764742, 1),
+     (0.5689089654218565, 1),
+     (0.3808941948851221, 1),
+     (0.09681194091404756, 0),
+     (0.09171553684810813, 0),
+     (0.06389992698143282, 0),
+     (0.06179964534538981, 1),
+     (0.04406238440342279, 0),
+     (0.04300759673505499, 0),
+     (0.042516826021227055, 0)]
 
 
 
