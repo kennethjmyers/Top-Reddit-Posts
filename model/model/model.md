@@ -50,7 +50,7 @@ spark.stop()  # we don't need spark now
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, recall_score, precision_score, precision_recall_curve, auc
-
+from sklearn.preprocessing import StandardScaler
 ```
 
 
@@ -66,11 +66,63 @@ df['randomVar'] = np.random.binomial(1, df['target'].mean(), len(df))
 
 
 ```python
+def plotPrecRecAUCPR(X_train, y_train, X_test, y_test):
+  lr = LogisticRegression(penalty='l2', fit_intercept=True, C=.01)
+  lr.fit(X_train, y_train)
+  y_pred = lr.predict(X_test)
+  y_pred_proba = lr.predict_proba(X_test)[:, 1]
+  # print(f"accuracy: {accuracy_score(y_test,y_pred)}") # doesn't mean much with imbalanced data
+  # print(f"precision: {precision_score(y_test,y_pred)}")
+  # print(f"recall: {recall_score(y_test,y_pred)}")
+  precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred_proba)
+  aucpr = auc(recalls, precisions)
+  print(f"AUCPR: {aucpr:.04f}")
+
+  coefFeatures = np.concatenate((lr.feature_names_in_,np.array(['intercept'])))
+  coefValues = np.concatenate((lr.coef_[0],lr.intercept_))
+  coefDf = pd.DataFrame(list(zip(coefFeatures, coefValues)), columns=['feature', 'coef'])
+  coefDf['coefPct'] = (np.abs(coefDf['coef'])/np.abs(coefDf['coef']).sum()).apply(lambda x: f"{x:.06f}")
+  print(coefDf.to_string())
+
+  topQuantiles = np.arange(.95,1,0.005)
+  topQuantilesThresholds = np.quantile(y_pred_proba, topQuantiles)
+  totalTargets = y_test.sum()
+  topQPrecisions = [y_test[y_pred_proba>=t].mean() for t in topQuantilesThresholds]
+  topQRecalls = [y_test[y_pred_proba>=t].sum()/totalTargets for t in topQuantilesThresholds]
+
+  fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=False, squeeze=False)
+
+  axes[0,0].plot(topQuantiles, topQPrecisions)
+  axes[0,0].set_title(f'Precisions against quantile')
+  axes[0,0].set_ylim([0,1.05])
+  axes[0,0].set_xlabel('quantile')
+  axes[0,0].set_ylabel('precisions')
+
+  axes[0,1].plot(topQuantiles, topQRecalls)
+  axes[0,1].set_title(f'Recalls against quantile')
+  axes[0,1].set_ylim([0,1.05])
+  axes[0,1].set_xlabel('quantile')
+  axes[0,1].set_ylabel('recalls')
+
+  axes[0,2].plot(recalls, precisions)
+  axes[0,2].set_title(f'AUCPR={aucpr:.04f}')
+  axes[0,2].set_xlabel('recalls')
+  axes[0,2].set_ylabel('precisions')
+
+  plt.show()
+```
+
+
+```python
+# scaler = StandardScaler()
+# scaler.fit(X_train)
+# X_train_std, X_test_std = pd.DataFrame(scaler.transform(X_train), columns=X_train.columns), scaler.transform(X_test)
+ 
 features = [
-  'maxScore20m',
+  #'maxScore20m',
   'maxScore21_40m',
   'maxScore41_60m',
-  'maxNumComments20m',
+  #'maxNumComments20m',
   'maxNumComments21_40m',
   'maxNumComments41_60m',
 #   'maxUpvoteRatio20m', 
@@ -79,91 +131,39 @@ features = [
 #   'maxNumGildings20m',  # we know these are bad features from prior analysis
 #   'maxNumGildings21_40m',
 #   'maxNumGildings41_60m',
+  'maxScoreGrowth21_40m41_60m',
+  'maxNumCommentsGrowth21_40m41_60m',
   'randomVar',
 ]
-```
 
-
-```python
 X = df[features]
 y = df['target']
-print(len(y), y.sum())  # how many targets are there
-```
+print(f"total posts: {len(y)}, viral posts: {y.sum()}")  # how many targets are there, This is a highly imbalanced problem, only ~2.5% of posts in rising go viral
 
-    956 25
-
-
-This is a highly imbalanced problem, only ~2.5% of posts in rising go viral
-
-
-```python
 sss = StratifiedShuffleSplit(n_splits=1, train_size=0.8, test_size=0.2, random_state=0)
 train_index, test_index = next(sss.split(X,y))
 X_train, y_train, X_test, y_test = X.iloc[train_index], y.iloc[train_index], X.iloc[test_index], y.iloc[test_index]
+
+plotPrecRecAUCPR(X_train, y_train, X_test, y_test)
 ```
 
-
-```python
-lr = LogisticRegression(penalty='l2', fit_intercept=True, C=0.0001)
-lr.fit(X_train, y_train)
-y_pred = lr.predict(X_test)
-y_pred_proba = lr.predict_proba(X_test)[:, 1]
-# print(f"accuracy: {accuracy_score(y_test,y_pred)}") # doesn't mean much with imbalanced data
-# print(f"precision: {precision_score(y_test,y_pred)}")
-# print(f"recall: {recall_score(y_test,y_pred)}")
-precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred_proba)
-topQuantiles = np.arange(.95,1,0.005)
-topQuantilesThresholds = np.quantile(y_pred_proba, topQuantiles)
-totalTargets = y_test.sum()
-topQPrecisions = [y_test[y_pred_proba>=t].mean() for t in topQuantilesThresholds]
-topQRecalls = [y_test[y_pred_proba>=t].sum()/totalTargets for t in topQuantilesThresholds]
-aucpr = auc(recalls, precisions)
-print(f"AUCPR: {aucpr:.04f}")
-
-coefFeatures = np.concatenate((lr.feature_names_in_,np.array(['intercept'])))
-coefValues = np.concatenate((lr.coef_[0],lr.intercept_))
-coefDf = pd.DataFrame(list(zip(coefFeatures, coefValues)), columns=['feature', 'coef'])
-coefDf['coefPct'] = (np.abs(coefDf['coef'])/np.abs(coefDf['coef']).sum()).apply(lambda x: f"{x:.06f}")
-print(coefDf.to_string())
-
-fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=False, squeeze=False)
-
-axes[0,0].plot(topQuantiles, topQPrecisions)
-axes[0,0].set_title(f'Precisions against quantile')
-axes[0,0].set_ylim([0,1.05])
-axes[0,0].set_xlabel('quantile')
-axes[0,0].set_ylabel('precisions')
-
-axes[0,1].plot(topQuantiles, topQRecalls)
-axes[0,1].set_title(f'Recalls against quantile')
-axes[0,1].set_ylim([0,1.05])
-axes[0,1].set_xlabel('quantile')
-axes[0,1].set_ylabel('recalls')
-
-axes[0,2].plot(recalls, precisions)
-axes[0,2].set_title(f'AUCPR={aucpr:.04f}')
-axes[0,2].set_xlabel('recalls')
-axes[0,2].set_ylabel('precisions')
-
-plt.show()
-```
-
-    AUCPR: 0.6446
-                    feature      coef   coefPct
-    0           maxScore20m  0.002973  0.000637
-    1        maxScore21_40m  0.009072  0.001945
-    2        maxScore41_60m  0.032356  0.006937
-    3     maxNumComments20m  0.000856  0.000184
-    4  maxNumComments21_40m  0.002217  0.000475
-    5  maxNumComments41_60m  0.008489  0.001820
-    6  maxUpvoteRatio21_40m  0.000045  0.000010
-    7  maxUpvoteRatio41_60m  0.000158  0.000034
-    8             randomVar -0.000017  0.000004
-    9             intercept -4.608396  0.987955
+    total posts: 1047, viral posts: 26
+    AUCPR: 0.7387
+                                feature      coef   coefPct
+    0                    maxScore21_40m -0.102552  0.019093
+    1                    maxScore41_60m  0.122840  0.022870
+    2              maxNumComments21_40m -0.124421  0.023165
+    3              maxNumComments41_60m  0.048460  0.009022
+    4              maxUpvoteRatio21_40m  0.010928  0.002035
+    5              maxUpvoteRatio41_60m  0.009428  0.001755
+    6        maxScoreGrowth21_40m41_60m  0.038466  0.007162
+    7  maxNumCommentsGrowth21_40m41_60m  0.061712  0.011490
+    8                         randomVar -0.001982  0.000369
+    9                         intercept -4.850372  0.903040
 
 
 
-![png](output_12_1.png)
+![png](output_9_1.png)
 
 
 This is a pretty good model so far. There seems to be evidence for removing the upvote ratio features. I ran an experiment without them (not shown here) and it seemed to perform well without them but I want to experiment more before making a decision.
@@ -177,20 +177,20 @@ sorted(list(zip(y_pred_proba, y_test)), key=lambda x:x[0])[::-1][:10]
 
 
 
-    [(0.1133521634325173, 1),
-     (0.09324029763394256, 1),
-     (0.07449727126334749, 1),
-     (0.06862059386820324, 0),
-     (0.056006736448775477, 0),
-     (0.05029258284333271, 0),
-     (0.037073675922916875, 0),
-     (0.03694495442191244, 0),
-     (0.03383443621544285, 0),
-     (0.03310039620314243, 0)]
+    [(0.06020266659787673, 0),
+     (0.05240396880412406, 0),
+     (0.04298745870651433, 0),
+     (0.039768110456671474, 0),
+     (0.03874993953016156, 0),
+     (0.037285632209419654, 0),
+     (0.03566623960759841, 0),
+     (0.03525635766580686, 0),
+     (0.035088343739840225, 0),
+     (0.03348198975346211, 0)]
 
 
 
-It is cool that 3/5 of the viral posts were all in the top 3
+It is cool to see many of the posts being scored at the top.
 
 
 ```python
@@ -393,17 +393,103 @@ I created the above to spotcheck a few examples. The 2 that I failed to predict 
 
 The three posts that were predicted to go viral but ultimately were not all had pretty high upvote counts after the first hour but must have lost traction afterwards, this is further evidence that maybe it would be better to extend the data collection another 30-60 minutes.
 
+# SHAP analysis
+
+For imbalanced datasets, I like to look at the SHAP values for the target of interest (viral posts).
+
+
+```python
+import shap
+```
+
+
+```python
+# https://shap.readthedocs.io/en/latest/example_notebooks/api_examples/plots/beeswarm.html
+lr = LogisticRegression(penalty='l2', fit_intercept=True, C=.01)
+lr.fit(X, y)
+explainer = shap.Explainer(lr, X, feature_names=X.columns)
+shap_values = explainer(X)
+shap_values_0 = explainer(X[y==0])
+shap_values_1 = explainer(X[y==1])
+
+shap.plots.beeswarm(shap_values_1, show=False)
+ax = plt.gca()
+# You can change the min and max value of xaxis by changing the arguments of:
+#ax.set_xlim(-3, 3) 
+plt.show()
+```
+
+
+![png](output_17_0.png)
+
+
+
+```python
+shap.plots.beeswarm(shap_values_0, show=False)
+ax = plt.gca()
+# You can change the min and max value of xaxis by changing the arguments of:
+#ax.set_xlim(-3, 3) 
+plt.show()
+```
+
+
+![png](output_18_0.png)
+
+
+
+```python
+shap.plots.bar(shap_values.cohorts([i for i in map(str, y.values)]).abs.mean(0), show=False)
+```
+
+
+![png](output_19_0.png)
+
+
+
+```python
+shap.plots.bar(shap_values.cohorts([i for i in map(str, y.values)]).abs.max(0), show=False)
+
+```
+
+
+![png](output_20_0.png)
+
+
 # Grid search regularization parameter
 
-Feel like I have a pretty good model already but we don't have a lot of data right now so I just want to check how the model performs on different splits.
+Here I'm removing features based on the above findings, then I want to check how the model performs on different splits.
+
+I'm removing the randomVar and the upvoteRatio features since they seem to be the least useful.
 
 
 ```python
 from collections import defaultdict
 
-C_values = [1, 0.5, 0.1, 0.01, 0.001, 0.0001, 0.00001]
+C_values = [1, 0.5, 0.25, 0.1, 0.01, 0.001, 0.0001, 0.00001]
 
-sss = StratifiedShuffleSplit(n_splits=5, train_size=0.8, test_size=0.2, random_state=0)
+features = [
+  #'maxScore20m',
+  'maxScore21_40m',
+  'maxScore41_60m',
+  #'maxNumComments20m',
+  'maxNumComments21_40m',
+  'maxNumComments41_60m',
+#   'maxUpvoteRatio20m', 
+#   'maxUpvoteRatio21_40m',
+#   'maxUpvoteRatio41_60m',
+#   'maxNumGildings20m',  # we know these are bad features from prior analysis
+#   'maxNumGildings21_40m',
+#   'maxNumGildings41_60m',
+  'maxScoreGrowth21_40m41_60m',
+  'maxNumCommentsGrowth21_40m41_60m',
+#   'randomVar',
+]
+
+X = df[features]
+y = df['target']
+print(f"total posts: {len(y)}, viral posts: {y.sum()}")  # how many targets are there, This is a highly imbalanced problem, only ~2.5% of posts in rising go viral
+
+sss = StratifiedShuffleSplit(n_splits=10, train_size=0.8, test_size=0.2, random_state=0)
 
 aucprs = defaultdict(list)
 top2PctPrecisions = defaultdict(list)
@@ -430,20 +516,6 @@ for c in C_values:
   
   
   
-  
-```
-
-    collecting data for C=1
-    collecting data for C=0.5
-    collecting data for C=0.1
-    collecting data for C=0.01
-    collecting data for C=0.001
-    collecting data for C=0.0001
-    collecting data for C=1e-05
-
-
-
-```python
 dfDict = {
   'C':C_values,
   'AUCPRmean':[],
@@ -461,9 +533,18 @@ for c in C_values:
   dfDict['top2PctRecallmean'].append(np.mean(top2PctRecalls[c]))
   dfDict['top2PctRecallstd'].append(np.std(top2PctRecalls[c]))
 
-pd.DataFrame(dfDict)
+display(pd.DataFrame(dfDict))
 ```
 
+    total posts: 1047, viral posts: 26
+    collecting data for C=1
+    collecting data for C=0.5
+    collecting data for C=0.25
+    collecting data for C=0.1
+    collecting data for C=0.01
+    collecting data for C=0.001
+    collecting data for C=0.0001
+    collecting data for C=1e-05
 
 
 
@@ -498,80 +579,161 @@ pd.DataFrame(dfDict)
     <tr>
       <th>0</th>
       <td>1.00000</td>
-      <td>0.650781</td>
-      <td>0.193336</td>
-      <td>0.75</td>
-      <td>0.223607</td>
-      <td>0.60</td>
-      <td>0.178885</td>
+      <td>0.694865</td>
+      <td>0.199995</td>
+      <td>0.68</td>
+      <td>0.183303</td>
+      <td>0.68</td>
+      <td>0.183303</td>
     </tr>
     <tr>
       <th>1</th>
       <td>0.50000</td>
-      <td>0.652350</td>
-      <td>0.197410</td>
-      <td>0.75</td>
-      <td>0.223607</td>
-      <td>0.60</td>
-      <td>0.178885</td>
+      <td>0.698700</td>
+      <td>0.203529</td>
+      <td>0.68</td>
+      <td>0.183303</td>
+      <td>0.68</td>
+      <td>0.183303</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>0.10000</td>
-      <td>0.674226</td>
-      <td>0.168416</td>
-      <td>0.75</td>
-      <td>0.223607</td>
-      <td>0.60</td>
-      <td>0.178885</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>0.01000</td>
-      <td>0.675240</td>
-      <td>0.143684</td>
-      <td>0.75</td>
-      <td>0.223607</td>
-      <td>0.60</td>
-      <td>0.178885</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0.00100</td>
-      <td>0.646115</td>
-      <td>0.112927</td>
-      <td>0.65</td>
-      <td>0.254951</td>
-      <td>0.52</td>
+      <td>0.25000</td>
+      <td>0.696974</td>
+      <td>0.205991</td>
+      <td>0.68</td>
+      <td>0.203961</td>
+      <td>0.68</td>
       <td>0.203961</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>0.10000</td>
+      <td>0.712858</td>
+      <td>0.220093</td>
+      <td>0.68</td>
+      <td>0.203961</td>
+      <td>0.68</td>
+      <td>0.203961</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.01000</td>
+      <td>0.709550</td>
+      <td>0.213872</td>
+      <td>0.68</td>
+      <td>0.183303</td>
+      <td>0.68</td>
+      <td>0.183303</td>
+    </tr>
+    <tr>
       <th>5</th>
-      <td>0.00010</td>
-      <td>0.549917</td>
-      <td>0.080327</td>
+      <td>0.00100</td>
+      <td>0.616284</td>
+      <td>0.206839</td>
       <td>0.60</td>
       <td>0.200000</td>
-      <td>0.48</td>
-      <td>0.160000</td>
+      <td>0.60</td>
+      <td>0.200000</td>
     </tr>
     <tr>
       <th>6</th>
+      <td>0.00010</td>
+      <td>0.521266</td>
+      <td>0.215960</td>
+      <td>0.56</td>
+      <td>0.195959</td>
+      <td>0.56</td>
+      <td>0.195959</td>
+    </tr>
+    <tr>
+      <th>7</th>
       <td>0.00001</td>
-      <td>0.541391</td>
-      <td>0.086326</td>
-      <td>0.60</td>
-      <td>0.200000</td>
-      <td>0.48</td>
-      <td>0.160000</td>
+      <td>0.519571</td>
+      <td>0.218600</td>
+      <td>0.56</td>
+      <td>0.195959</td>
+      <td>0.56</td>
+      <td>0.195959</td>
     </tr>
   </tbody>
 </table>
 </div>
 
 
+Based on this it seems that more regularization has diminishing returns near the area where I was planning to choose my cutoff. I'll probably settle on a regularizer of C~0.01
 
-Based on this it seems that more regularization has diminishing returns near the area where I was planning to choose my cutoff. I'll probably settle on a regularizer of C~0.1
+# Create Final Model and Save Model
+
+Final model is just going to use all of the data. This isn't typical practice but we don't have a lot of data so I want to use all of the data available. 
+
+
+```python
+features = [
+  #'maxScore20m',
+  'maxScore21_40m',
+  'maxScore41_60m',
+  #'maxNumComments20m',
+  'maxNumComments21_40m',
+  'maxNumComments41_60m',
+#   'maxUpvoteRatio20m', 
+#   'maxUpvoteRatio21_40m',
+#   'maxUpvoteRatio41_60m',
+#   'maxNumGildings20m',  # we know these are bad features from prior analysis
+#   'maxNumGildings21_40m',
+#   'maxNumGildings41_60m',
+  'maxScoreGrowth21_40m41_60m',
+  'maxNumCommentsGrowth21_40m41_60m',
+#   'randomVar',
+]
+
+X = df[features]
+y = df['target']
+print(f"total posts: {len(y)}, viral posts: {y.sum()}")  # how many targets are there, This is a highly imbalanced problem, only ~2.5% of posts in rising go viral
+
+lr = LogisticRegression(penalty='l2', fit_intercept=True, C=c, max_iter=1000)
+lr.fit(X, y)
+
+```
+
+    total posts: 1047, viral posts: 26
+
+
+
+
+
+    LogisticRegression(C=1e-05, max_iter=1000)
+
+
+
+
+```python
+import pickle
+from datetime import datetime
+
+now = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
+filename = f'./pickledModels/Reddit_LR_model_{now}.sav'
+pickle.dump(lr, open(filename, 'wb'))
+```
+
+
+```python
+# testing the model
+loaded_model = pickle.load(open(filename, 'rb'))
+result = loaded_model.predict_proba(X)
+print(result)
+```
+
+    [[0.97706597 0.02293403]
+     [0.97557526 0.02442474]
+     [0.98022698 0.01977302]
+     ...
+     [0.97917265 0.02082735]
+     [0.98128941 0.01871059]
+     [0.97975689 0.02024311]]
+
+
+Next step is to move the model to S3, see the scripts directory for `copyToS3.sh` script. 
 
 
 ```python

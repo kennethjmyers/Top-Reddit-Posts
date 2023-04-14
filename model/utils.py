@@ -68,7 +68,7 @@ def getPostIdData(table, postId):
   )['Items']
 
 
-def getPostIdSparkDataFrame(spark, table, postIds: set, flatten: bool = True):
+def getPostIdSparkDataFrame(spark, table, postIds: set, chunkSize=10, flatten: bool = True):
   """
   Read from dynamo table the data for each postId in postIds.
   Optional flattening of data to single DataFrame before return
@@ -78,14 +78,21 @@ def getPostIdSparkDataFrame(spark, table, postIds: set, flatten: bool = True):
   :param spark: sparksession
   :param table: dynamodb table to query from
   :param postIds: set of postids to query
+  :param chunkSize: number of postIds to query before converting data to a spark DataFrame
   :param flatten: option to flatten data before return
   :return: list[DataFrame]|DataFrame
   """
   dataFrames = []
-  for postId in postIds:
+  chunkRes = []
+  for i, postId in enumerate(postIds):
     res = getPostIdData(table, postId)
     res = [applyDynamoConversions(item) for item in res]
-    dataFrames.append(spark.createDataFrame(res, toSparkSchema))  # convert to DF
+    chunkRes.extend(res)
+    if (i+1)%chunkSize==0:  # make a new dataframe if reached chunkSize
+      dataFrames.append(spark.createDataFrame(chunkRes, toSparkSchema))
+      chunkRes = []  # reset chunk collection
+  if len(chunkRes)>0:  # handle anything remaining
+    dataFrames.append(spark.createDataFrame(chunkRes, toSparkSchema))
   if flatten:
     return reduce(DataFrame.union, dataFrames)
   else:
@@ -110,6 +117,10 @@ def applyDataTransformations(postIdData):
       , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('numGildings'))).alias('maxNumGildings21_40m')
       , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('numGildings'))).alias('maxNumGildings41_60m')
     )
+    .withColumn("maxScoreGrowth21_40m41_60m",
+                (F.col('maxScore41_60m') - F.col('maxScore21_40m')) / F.col('maxScore21_40m'))
+    .withColumn("maxNumCommentsGrowth21_40m41_60m",
+                (F.col('maxNumComments41_60m') - F.col('maxNumComments21_40m')) / F.col('maxNumComments21_40m'))
   )
 
 

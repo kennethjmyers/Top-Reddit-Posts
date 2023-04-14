@@ -60,7 +60,7 @@ class Pipeline:
     # it can also be slow because converts each dynamodb partition to a spark dataframe,
     # this was done so that it would scale better on a distributed system
     # over keeping all the data in python in one node and trying to then move it to spark
-    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest)
+    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100)
     pandasTestDf = self.postIdData.limit(5).toPandas()
     print(pandasTestDf.to_string())
     print("Finished gathering Rising Data.")
@@ -139,7 +139,8 @@ class Pipeline:
     print("Finished writing to S3")
 
 
-pipeline = Pipeline()
-pipeline.extract()
-data = pipeline.transform()
-pipeline.load(data, "s3a://data-kennethmyers/redditAggregatedData.parquet")
+if __name__ == "__main__":
+  pipeline = Pipeline()
+  pipeline.extract()
+  data = pipeline.transform()
+  pipeline.load(data, "s3a://data-kennethmyers/redditAggregatedData.parquet")
