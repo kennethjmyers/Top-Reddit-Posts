@@ -1,5 +1,7 @@
 # Top Reddit Posts
 
+![](./images/architecture-diagram.png)
+
 ## Purpose
 
 This project intends to demonstrate a knowledge of:
