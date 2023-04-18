@@ -735,7 +735,16 @@ print(result)
      [0.97975689 0.02024311]]
 
 
-Next step is to move the model to S3, see the scripts directory for `copyToS3.sh` script. 
+# Upload Model to S3
+
+
+```python
+import boto3
+
+s3 = boto3.client('s3', region_name='us-east-2')
+
+response = s3.upload_file(filename, "data-kennethmyers", f"models/test{filename.split('/')[-1]}")
+```
 
 
 ```python
