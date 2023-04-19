@@ -4,8 +4,9 @@ from datetime import datetime, timedelta
 from pyspark.sql import DataFrame
 from schema import fromDynamoConversion, toSparkSchema
 from functools import reduce
-from boto3.dynamodb.conditions import  Key
+from boto3.dynamodb.conditions import  Key, Attr
 import pyspark.sql.functions as F
+import pandas as pd
 
 
 def findConfig() -> str:
@@ -62,13 +63,11 @@ def applyDynamoConversions(dynamoRes: dict, conversionFunctions: dict = fromDyna
   return {k:fromDynamoConversion[k](v) for k,v in dynamoRes.items()}
 
 
-def getPostIdData(table, postId):
-  return table.query(
-    KeyConditionExpression=Key('postId').eq(postId),
-  )['Items']
+def getPostIdData(table, postId, **kwargs):
+  return table.query(**kwargs)['Items']
 
 
-def getPostIdSparkDataFrame(spark, table, postIds: set, chunkSize=10, flatten: bool = True):
+def getPostIdSparkDataFrame(spark, table, postIds: set, chunkSize=10, flatten: bool = True, **kwargs):
   """
   Read from dynamo table the data for each postId in postIds.
   Optional flattening of data to single DataFrame before return
@@ -85,7 +84,7 @@ def getPostIdSparkDataFrame(spark, table, postIds: set, chunkSize=10, flatten: b
   dataFrames = []
   chunkRes = []
   for i, postId in enumerate(postIds):
-    res = getPostIdData(table, postId)
+    res = getPostIdData(table, postId, KeyConditionExpression=Key('postId').eq(postId), **kwargs)
     res = [applyDynamoConversions(item) for item in res]
     chunkRes.extend(res)
     if (i+1)%chunkSize==0:  # make a new dataframe if reached chunkSize
@@ -95,6 +94,37 @@ def getPostIdSparkDataFrame(spark, table, postIds: set, chunkSize=10, flatten: b
     dataFrames.append(spark.createDataFrame(chunkRes, toSparkSchema))
   if flatten:
     return reduce(DataFrame.union, dataFrames)
+  else:
+    return dataFrames
+
+
+def getPostIdPdDataFrame(table, postIds: set, chunkSize=10, flatten: bool = True, **kwargs):
+  """
+  Similar to getPostIdSparkDataFrame but sometimes data is small enough you don't need spark
+  Read from dynamo table the data for each postId in postIds.
+  Optional flattening of data to single DataFrame before return
+
+  There might be a more efficient way to stream dynamo data to spark, but this got the job done
+
+  :param table: dynamodb table to query from
+  :param postIds: set of postids to query
+  :param chunkSize: number of postIds to query before converting data to a pandas DataFrame
+  :param flatten: option to flatten data before return
+  :return: list[DataFrame]|DataFrame
+  """
+  dataFrames = []
+  chunkRes = []
+  for i, postId in enumerate(postIds):
+    res = getPostIdData(table, postId, KeyConditionExpression=Key('postId').eq(postId), **kwargs)
+    res = [applyDynamoConversions(item) for item in res]
+    chunkRes.extend(res)
+    if (i+1)%chunkSize==0:  # make a new dataframe if reached chunkSize
+      dataFrames.append(pd.DataFrame(chunkRes))
+      chunkRes = []  # reset chunk collection
+  if len(chunkRes)>0:  # handle anything remaining
+    dataFrames.append(pd.DataFrame(chunkRes))
+  if flatten:
+    return pd.concat(dataFrames, axis=0)
   else:
     return dataFrames
 
