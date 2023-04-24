@@ -49,9 +49,10 @@ def upsert_df(df: pd.DataFrame, table_name: str, engine: sqlalchemy.engine.Engin
       update_column_stmt = ", ".join([f'"{col}" = EXCLUDED."{col}"' for col in columns])
 
       # For the ON CONFLICT clause, postgres requires that the columns have unique constraint
+      constraint_name = f"unique_constraint_for_{table_name}_upsert"
       query_pk = f"""
-      ALTER TABLE "{table_name}" DROP CONSTRAINT IF EXISTS unique_constraint_for_upsert;
-      ALTER TABLE "{table_name}" ADD CONSTRAINT unique_constraint_for_upsert UNIQUE ({index_sql_txt});
+      ALTER TABLE "{table_name}" DROP CONSTRAINT IF EXISTS {constraint_name};
+      ALTER TABLE "{table_name}" ADD CONSTRAINT {constraint_name} UNIQUE ({index_sql_txt});
       """  # it's saying the index names must be unique
       engine.execute(query_pk)
 

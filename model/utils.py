@@ -4,9 +4,11 @@ from datetime import datetime, timedelta
 from pyspark.sql import DataFrame
 from schema import fromDynamoConversion, toSparkSchema
 from functools import reduce
+import boto3
 from boto3.dynamodb.conditions import  Key, Attr
 import pyspark.sql.functions as F
 import pandas as pd
+import pickle
 
 
 def findConfig() -> str:
@@ -165,3 +167,17 @@ def getTarget(postId:str, uniqueHotPostIds:set):
     return 1
   else:
     return 0
+
+
+def getLatestModel():
+  s3 = boto3.resource('s3', region_name='us-east-2')
+  bucketName = 'data-kennethmyers'
+  bucket = s3.Bucket(bucketName)
+  objs = bucket.objects.filter(Prefix='models/Reddit_LR_model_')
+  latestModelLoc = sorted([obj.key for obj in objs])[-1]
+  print(f"Latest model location: s3a://{bucketName}/{latestModelLoc}")
+  modelSaveLoc = './pickledModels/latestModel.sav'
+  s3_client = boto3.client('s3', region_name='us-east-2')
+  s3_client.download_file('data-kennethmyers', latestModelLoc, modelSaveLoc)
+  model = pickle.load(open(modelSaveLoc, 'rb'))
+  return model
