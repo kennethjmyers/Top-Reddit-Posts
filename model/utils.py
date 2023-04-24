@@ -20,11 +20,14 @@ def parseConfig(cfg_file: str) -> dict:
   parser = ConfigParser()
   cfg = dict()
   _ = parser.read(cfg_file)
-  cfg['ACCESSKEY'] = parser.get("S3_access", "ACCESSKEY")
-  cfg['SECRETKEY'] = parser.get("S3_access", "SECRETKEY")
-  cfg['BOTTOKEN'] = parser.get("Discord", "BOTTOKEN")
-  cfg['MYSNOWFLAKEID'] = parser.get("Discord", "MYSNOWFLAKEID")
-  cfg['CHANNELSNOWFLAKEID'] = parser.get("Discord", "CHANNELSNOWFLAKEID")
+  keysToRead = {
+    'S3_access': ['ACCESSKEY', 'SECRETKEY', ],
+    'Discord': ['BOTTOKEN', 'MYSNOWFLAKEID', 'CHANNELSNOWFLAKEID'],
+    'Postgres': ['USERNAME', 'PASSWORD', 'HOST', 'PORT', 'DATABASE']
+  }
+  for k,vList in keysToRead.items():
+    for v in vList:
+      cfg[v] = parser.get(k, v)
   return cfg
 
 

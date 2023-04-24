@@ -4,8 +4,10 @@ numpy==1.15  # required by pyspark
 pandas==1.0.5  # required by pyspark
 pre-commit==2.21.0
 praw==7.7.0
+pg8000==1.29.4  # this was easier to pip install than psycopg2
 pyarrow==2.0.0
 pyspark==3.3.0  # using this version because py37 deprecated in pyspark 3.4.0
 scikit-learn==1.0.2
 seaborn==0.11.2
 shap==0.41.0
+sqlalchemy==1.4.46  # originally tried 2.0.10, but this was incompatible with old versions of pandas https://stackoverflow.com/a/75282604/5034651
