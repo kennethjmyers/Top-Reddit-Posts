@@ -47,3 +47,26 @@ def createMessage(botToken: str, channelId: str,  message: str):
     json={"content": message}
   )
   return response
+
+
+def discordMessageHandler(botToken, channelId, message):
+    """
+    Function to send a message to a Discord DM or Channel.
+    Makes 5 attempts to send the message
+
+    :param botToken: token for bot
+    :param channelId: the snowflake id that represents the dm or channel to message
+    :param message: message text to send to discord DM or Channel
+    :return:
+    """
+    statusCode = 0
+    attempts = 0
+
+    while statusCode != 200 and attempts < 5:
+      response = createMessage(botToken=botToken, channelId=channelId, message=message)
+      statusCode = response.status_code
+      attempts += 1
+
+    if statusCode != 200:
+      raise RuntimeError(f'Failed to send discord message to {channelId}\n\tmessage={message}')
+    return
