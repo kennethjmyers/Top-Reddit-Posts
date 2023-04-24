@@ -32,10 +32,7 @@ spark = (
 class Pipeline:
   def __init__(self, spark=spark):
     self.spark = spark
-    session = boto3.Session(profile_name='AdministratorAccess', region_name='us-east-2')
-    # resource vs client: https://www.learnaws.org/2021/02/24/boto3-resource-client/
-    self.dynamodb_resource = session.resource('dynamodb')  #  higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')
-    # dynamodb_client = session.client('dynamodb')  # low-level, more explicit methods. Creating table returns a dictionary
+    self.dynamodb_resource = boto3.resource('dynamodb', region_name='us-east-2')  #  higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')
 
     # initializations - passed between functions
     self.postIdData = None
@@ -143,4 +140,4 @@ if __name__ == "__main__":
   pipeline = Pipeline()
   pipeline.extract()
   data = pipeline.transform()
-  pipeline.load(data, "s3a://data-kennethmyers/redditAggregatedData.parquet")
+  pipeline.load(data, f"s3a://data-kennethmyers/model_data/redditAggregatedData.parquet")
