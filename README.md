@@ -18,7 +18,7 @@ This project collects data from rising posts on Reddit and identify features tha
 
 ## Requirements
 
-1. python == 3.9
+1. python == 3.7
 2. [praw](https://github.com/praw-dev/praw) == 7.7.0
 3. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 4. Spark == 3.0.1
