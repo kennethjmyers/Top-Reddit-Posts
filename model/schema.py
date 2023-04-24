@@ -34,3 +34,24 @@ toSparkSchema = StructType([
   StructField("upvoteRatio", FloatType(), True),
   StructField("numGildings", IntegerType(), True),
 ])
+
+aggDataSparkSchema = StructType([
+  StructField("postId",StringType(),False),
+  StructField("subreddit",StringType(),False),
+  StructField("title",StringType(),False),
+  StructField("createdTSUTC", TimestampType(), False),
+  StructField("maxScore20m", IntegerType(), False),
+  StructField("maxScore21_40m", IntegerType(), False),
+  StructField("maxScore41_60m", IntegerType(), False),
+  StructField("maxNumComments20m", IntegerType(), False),
+  StructField("maxNumComments21_40m", IntegerType(), False),
+  StructField("maxNumComments41_60m", IntegerType(), False),
+  StructField("maxUpvoteRatio20m", FloatType(), False),
+  StructField("maxUpvoteRatio21_40m", FloatType(), False),
+  StructField("maxUpvoteRatio41_60m", FloatType(), False),
+  StructField("maxNumGildings20m", IntegerType(), False),
+  StructField("maxNumGildings21_40m", IntegerType(), False),
+  StructField("maxNumGildings41_60m", IntegerType(), False),
+  StructField("maxScoreGrowth21_40m41_60m", FloatType(), False),
+  StructField("maxNumCommentsGrowth21_40m41_60m", FloatType(), False),
+])

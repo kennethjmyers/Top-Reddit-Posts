@@ -8,7 +8,6 @@
 
 ```python
 import utils
-import s3fs
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -198,17 +197,26 @@ It is cool to see many of the posts being scored at the top.
 ```python
 # I wanted to see some data on the viral posts (why were some accurately predicted and some not)
 # and the posts that had high viral probability but were considered non-viral
-def getOriginalPostId():
+def getOriginalPostId(df, test_index, y_test, y_pred_proba, threshold):
   fullTestData = df.iloc[test_index].copy(deep=True)
   fullTestData['prediction'] = y_pred_proba
   fullTestData['link'] = fullTestData['postId'].apply(lambda x: "https://reddit.com/"+x)
   target1Indexes = np.where(y_test==1)[0]
   viralPosts = fullTestData[fullTestData['target']==1].sort_values('prediction', ascending=False)
-  nonViralPosts = fullTestData[fullTestData['target']==0].sort_values('prediction', ascending=False).head(3)
+  nonViralPosts = fullTestData[fullTestData['target']==0].sort_values('prediction', ascending=False)
+  nonViralPosts = nonViralPosts[nonViralPosts['prediction']>=threshold]
+  
+  p = len(viralPosts)
+  tp = len(viralPosts[viralPosts['prediction']>=threshold])
+  fp = len(nonViralPosts)
+    
+  print(f"recall = {tp/p}")
+  print(f"precision = {tp/(tp+fp)}")
+
   return pd.concat([viralPosts, nonViralPosts], axis=0)[['target', 'postId', 'link', 'prediction', 'createdTSUTC']+features]
 
 
-getOriginalPostId()
+getOriginalPostId(df, test_index, y_test, y_pred_proba, threshold=0.0500)
 ```
 
 
@@ -743,8 +751,726 @@ import boto3
 
 s3 = boto3.client('s3', region_name='us-east-2')
 
-response = s3.upload_file(filename, "data-kennethmyers", f"models/test{filename.split('/')[-1]}")
+response = s3.upload_file(filename, "data-kennethmyers", f"models/{filename.split('/')[-1]}")
 ```
+
+# Get Threshold of Top 2.5% of data
+
+Really this should be done with a holdout set, but I don't have enough data right now so I'm just going to generate it from the in-sample data. We can always adjust the threshold later.
+
+
+```python
+y_pred_proba = lr.predict_proba(X[lr.feature_names_in_])[:, 1]
+threshold = np.quantile(y_pred_proba, 0.975)
+threshold
+```
+
+
+
+
+    0.04002070200516874
+
+
+
+
+```python
+# this was defined earlier
+getOriginalPostId(df, list(range(len(df))), y, y_pred_proba, threshold)
+```
+
+    recall = 0.5769230769230769
+    precision = 0.5555555555555556
+
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target</th>
+      <th>postId</th>
+      <th>link</th>
+      <th>prediction</th>
+      <th>createdTSUTC</th>
+      <th>maxScore21_40m</th>
+      <th>maxScore41_60m</th>
+      <th>maxNumComments21_40m</th>
+      <th>maxNumComments41_60m</th>
+      <th>maxUpvoteRatio21_40m</th>
+      <th>maxUpvoteRatio41_60m</th>
+      <th>maxScoreGrowth21_40m41_60m</th>
+      <th>maxNumCommentsGrowth21_40m41_60m</th>
+      <th>randomVar</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>509</th>
+      <td>1</td>
+      <td>12jq4tt</td>
+      <td>https://reddit.com/12jq4tt</td>
+      <td>0.919392</td>
+      <td>2023-04-12 15:42:19</td>
+      <td>149.0</td>
+      <td>465.0</td>
+      <td>15.0</td>
+      <td>28.0</td>
+      <td>0.92</td>
+      <td>0.94</td>
+      <td>2.120805</td>
+      <td>0.866667</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>941</th>
+      <td>1</td>
+      <td>12h2f14</td>
+      <td>https://reddit.com/12h2f14</td>
+      <td>0.351261</td>
+      <td>2023-04-10 01:15:02</td>
+      <td>90.0</td>
+      <td>239.0</td>
+      <td>8.0</td>
+      <td>10.0</td>
+      <td>0.95</td>
+      <td>0.92</td>
+      <td>1.655556</td>
+      <td>0.250000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>769</th>
+      <td>1</td>
+      <td>12i4sov</td>
+      <td>https://reddit.com/12i4sov</td>
+      <td>0.280540</td>
+      <td>2023-04-11 02:07:53</td>
+      <td>103.0</td>
+      <td>201.0</td>
+      <td>18.0</td>
+      <td>34.0</td>
+      <td>0.94</td>
+      <td>0.94</td>
+      <td>0.951456</td>
+      <td>0.888889</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>450</th>
+      <td>1</td>
+      <td>12hzrqf</td>
+      <td>https://reddit.com/12hzrqf</td>
+      <td>0.262575</td>
+      <td>2023-04-10 23:03:54</td>
+      <td>77.0</td>
+      <td>207.0</td>
+      <td>11.0</td>
+      <td>23.0</td>
+      <td>0.91</td>
+      <td>0.93</td>
+      <td>1.688312</td>
+      <td>1.090909</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>347</th>
+      <td>1</td>
+      <td>12j6x2a</td>
+      <td>https://reddit.com/12j6x2a</td>
+      <td>0.096599</td>
+      <td>2023-04-12 02:32:35</td>
+      <td>58.0</td>
+      <td>114.0</td>
+      <td>13.0</td>
+      <td>25.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.965517</td>
+      <td>0.923077</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>356</th>
+      <td>1</td>
+      <td>12jl502</td>
+      <td>https://reddit.com/12jl502</td>
+      <td>0.076477</td>
+      <td>2023-04-12 12:47:17</td>
+      <td>62.0</td>
+      <td>95.0</td>
+      <td>3.0</td>
+      <td>6.0</td>
+      <td>0.98</td>
+      <td>0.96</td>
+      <td>0.532258</td>
+      <td>1.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>335</th>
+      <td>1</td>
+      <td>12km1m9</td>
+      <td>https://reddit.com/12km1m9</td>
+      <td>0.065635</td>
+      <td>2023-04-13 11:39:59</td>
+      <td>48.0</td>
+      <td>87.0</td>
+      <td>6.0</td>
+      <td>6.0</td>
+      <td>0.98</td>
+      <td>0.96</td>
+      <td>0.812500</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>377</th>
+      <td>1</td>
+      <td>12hjun1</td>
+      <td>https://reddit.com/12hjun1</td>
+      <td>0.051013</td>
+      <td>2023-04-10 14:06:18</td>
+      <td>24.0</td>
+      <td>69.0</td>
+      <td>21.0</td>
+      <td>33.0</td>
+      <td>0.94</td>
+      <td>0.96</td>
+      <td>1.875000</td>
+      <td>0.571429</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>793</th>
+      <td>1</td>
+      <td>12iil1k</td>
+      <td>https://reddit.com/12iil1k</td>
+      <td>0.049290</td>
+      <td>2023-04-11 12:40:55</td>
+      <td>36.0</td>
+      <td>65.0</td>
+      <td>8.0</td>
+      <td>15.0</td>
+      <td>1.00</td>
+      <td>0.97</td>
+      <td>0.805556</td>
+      <td>0.875000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>143</th>
+      <td>1</td>
+      <td>12iolqv</td>
+      <td>https://reddit.com/12iolqv</td>
+      <td>0.048072</td>
+      <td>2023-04-11 16:07:21</td>
+      <td>29.0</td>
+      <td>67.0</td>
+      <td>6.0</td>
+      <td>9.0</td>
+      <td>0.95</td>
+      <td>0.94</td>
+      <td>1.310345</td>
+      <td>0.500000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>192</th>
+      <td>1</td>
+      <td>12k617g</td>
+      <td>https://reddit.com/12k617g</td>
+      <td>0.044676</td>
+      <td>2023-04-13 00:48:33</td>
+      <td>43.0</td>
+      <td>54.0</td>
+      <td>9.0</td>
+      <td>11.0</td>
+      <td>0.94</td>
+      <td>0.86</td>
+      <td>0.255814</td>
+      <td>0.222222</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>63</th>
+      <td>1</td>
+      <td>12kmpij</td>
+      <td>https://reddit.com/12kmpij</td>
+      <td>0.044461</td>
+      <td>2023-04-13 12:03:35</td>
+      <td>23.0</td>
+      <td>64.0</td>
+      <td>3.0</td>
+      <td>3.0</td>
+      <td>0.96</td>
+      <td>0.91</td>
+      <td>1.782609</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>615</th>
+      <td>1</td>
+      <td>12h2rfc</td>
+      <td>https://reddit.com/12h2rfc</td>
+      <td>0.040949</td>
+      <td>2023-04-10 01:29:44</td>
+      <td>27.0</td>
+      <td>55.0</td>
+      <td>2.0</td>
+      <td>4.0</td>
+      <td>0.87</td>
+      <td>0.91</td>
+      <td>1.037037</td>
+      <td>1.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>944</th>
+      <td>1</td>
+      <td>12jijwn</td>
+      <td>https://reddit.com/12jijwn</td>
+      <td>0.040275</td>
+      <td>2023-04-12 11:07:02</td>
+      <td>25.0</td>
+      <td>52.0</td>
+      <td>6.0</td>
+      <td>16.0</td>
+      <td>0.88</td>
+      <td>0.87</td>
+      <td>1.080000</td>
+      <td>1.666667</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>596</th>
+      <td>1</td>
+      <td>12kn4oy</td>
+      <td>https://reddit.com/12kn4oy</td>
+      <td>0.040150</td>
+      <td>2023-04-13 12:18:16</td>
+      <td>30.0</td>
+      <td>52.0</td>
+      <td>2.0</td>
+      <td>4.0</td>
+      <td>0.96</td>
+      <td>0.88</td>
+      <td>0.733333</td>
+      <td>1.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>593</th>
+      <td>1</td>
+      <td>12k3pu8</td>
+      <td>https://reddit.com/12k3pu8</td>
+      <td>0.038274</td>
+      <td>2023-04-12 23:28:00</td>
+      <td>31.0</td>
+      <td>43.0</td>
+      <td>16.0</td>
+      <td>23.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.387097</td>
+      <td>0.437500</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>286</th>
+      <td>1</td>
+      <td>12ikxfp</td>
+      <td>https://reddit.com/12ikxfp</td>
+      <td>0.037102</td>
+      <td>2023-04-11 14:05:54</td>
+      <td>26.0</td>
+      <td>45.0</td>
+      <td>10.0</td>
+      <td>11.0</td>
+      <td>0.81</td>
+      <td>0.86</td>
+      <td>0.730769</td>
+      <td>0.100000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>62</th>
+      <td>1</td>
+      <td>12id2dd</td>
+      <td>https://reddit.com/12id2dd</td>
+      <td>0.037018</td>
+      <td>2023-04-11 08:20:05</td>
+      <td>25.0</td>
+      <td>47.0</td>
+      <td>3.0</td>
+      <td>4.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.880000</td>
+      <td>0.333333</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>253</th>
+      <td>1</td>
+      <td>12hhgkx</td>
+      <td>https://reddit.com/12hhgkx</td>
+      <td>0.036236</td>
+      <td>2023-04-10 12:33:35</td>
+      <td>24.0</td>
+      <td>42.0</td>
+      <td>13.0</td>
+      <td>20.0</td>
+      <td>0.93</td>
+      <td>0.88</td>
+      <td>0.750000</td>
+      <td>0.538462</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>82</th>
+      <td>1</td>
+      <td>12kluru</td>
+      <td>https://reddit.com/12kluru</td>
+      <td>0.032682</td>
+      <td>2023-04-13 11:32:48</td>
+      <td>25.0</td>
+      <td>35.0</td>
+      <td>5.0</td>
+      <td>10.0</td>
+      <td>1.00</td>
+      <td>0.97</td>
+      <td>0.400000</td>
+      <td>1.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>905</th>
+      <td>1</td>
+      <td>12khcf7</td>
+      <td>https://reddit.com/12khcf7</td>
+      <td>0.027446</td>
+      <td>2023-04-13 08:25:53</td>
+      <td>15.0</td>
+      <td>25.0</td>
+      <td>4.0</td>
+      <td>6.0</td>
+      <td>0.89</td>
+      <td>0.93</td>
+      <td>0.666667</td>
+      <td>0.500000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>1</td>
+      <td>12j3thv</td>
+      <td>https://reddit.com/12j3thv</td>
+      <td>0.026781</td>
+      <td>2023-04-12 00:36:43</td>
+      <td>14.0</td>
+      <td>24.0</td>
+      <td>2.0</td>
+      <td>3.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.714286</td>
+      <td>0.500000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>108</th>
+      <td>1</td>
+      <td>12gy3q0</td>
+      <td>https://reddit.com/12gy3q0</td>
+      <td>0.026618</td>
+      <td>2023-04-09 22:29:59</td>
+      <td>0.0</td>
+      <td>26.0</td>
+      <td>0.0</td>
+      <td>24.0</td>
+      <td>0.00</td>
+      <td>0.82</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>167</th>
+      <td>1</td>
+      <td>12hbk3l</td>
+      <td>https://reddit.com/12hbk3l</td>
+      <td>0.025560</td>
+      <td>2023-04-10 08:05:22</td>
+      <td>15.0</td>
+      <td>20.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.333333</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>747</th>
+      <td>1</td>
+      <td>12hdvy0</td>
+      <td>https://reddit.com/12hdvy0</td>
+      <td>0.024363</td>
+      <td>2023-04-10 09:59:05</td>
+      <td>12.0</td>
+      <td>15.0</td>
+      <td>4.0</td>
+      <td>12.0</td>
+      <td>1.00</td>
+      <td>1.00</td>
+      <td>0.250000</td>
+      <td>2.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>688</th>
+      <td>1</td>
+      <td>12jhdpf</td>
+      <td>https://reddit.com/12jhdpf</td>
+      <td>0.021964</td>
+      <td>2023-04-12 10:14:37</td>
+      <td>7.0</td>
+      <td>10.0</td>
+      <td>2.0</td>
+      <td>3.0</td>
+      <td>0.82</td>
+      <td>0.82</td>
+      <td>0.428571</td>
+      <td>0.500000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>310</th>
+      <td>0</td>
+      <td>12k7d2d</td>
+      <td>https://reddit.com/12k7d2d</td>
+      <td>0.202078</td>
+      <td>2023-04-13 01:40:09</td>
+      <td>103.0</td>
+      <td>163.0</td>
+      <td>31.0</td>
+      <td>39.0</td>
+      <td>0.89</td>
+      <td>0.83</td>
+      <td>0.582524</td>
+      <td>0.258065</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>577</th>
+      <td>0</td>
+      <td>12ldk40</td>
+      <td>https://reddit.com/12ldk40</td>
+      <td>0.178587</td>
+      <td>2023-04-14 00:46:48</td>
+      <td>83.0</td>
+      <td>161.0</td>
+      <td>23.0</td>
+      <td>30.0</td>
+      <td>0.98</td>
+      <td>0.98</td>
+      <td>0.939759</td>
+      <td>0.304348</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>50</th>
+      <td>0</td>
+      <td>12jivla</td>
+      <td>https://reddit.com/12jivla</td>
+      <td>0.077941</td>
+      <td>2023-04-12 11:20:30</td>
+      <td>76.0</td>
+      <td>91.0</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>0.97</td>
+      <td>0.97</td>
+      <td>0.197368</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>327</th>
+      <td>0</td>
+      <td>12hkaav</td>
+      <td>https://reddit.com/12hkaav</td>
+      <td>0.076019</td>
+      <td>2023-04-10 14:22:07</td>
+      <td>60.0</td>
+      <td>91.0</td>
+      <td>18.0</td>
+      <td>24.0</td>
+      <td>0.72</td>
+      <td>0.72</td>
+      <td>0.516667</td>
+      <td>0.333333</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>353</th>
+      <td>0</td>
+      <td>12j494l</td>
+      <td>https://reddit.com/12j494l</td>
+      <td>0.063022</td>
+      <td>2023-04-12 00:52:16</td>
+      <td>71.0</td>
+      <td>72.0</td>
+      <td>12.0</td>
+      <td>12.0</td>
+      <td>0.95</td>
+      <td>0.83</td>
+      <td>0.014085</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>579</th>
+      <td>0</td>
+      <td>12irb9c</td>
+      <td>https://reddit.com/12irb9c</td>
+      <td>0.054581</td>
+      <td>2023-04-11 17:41:11</td>
+      <td>54.0</td>
+      <td>68.0</td>
+      <td>4.0</td>
+      <td>7.0</td>
+      <td>1.00</td>
+      <td>0.99</td>
+      <td>0.259259</td>
+      <td>0.750000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>229</th>
+      <td>0</td>
+      <td>12jnfcd</td>
+      <td>https://reddit.com/12jnfcd</td>
+      <td>0.052487</td>
+      <td>2023-04-12 14:09:34</td>
+      <td>36.0</td>
+      <td>67.0</td>
+      <td>22.0</td>
+      <td>29.0</td>
+      <td>0.71</td>
+      <td>0.71</td>
+      <td>0.861111</td>
+      <td>0.318182</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>951</th>
+      <td>0</td>
+      <td>12iq49b</td>
+      <td>https://reddit.com/12iq49b</td>
+      <td>0.051337</td>
+      <td>2023-04-11 17:01:09</td>
+      <td>41.0</td>
+      <td>68.0</td>
+      <td>6.0</td>
+      <td>7.0</td>
+      <td>0.96</td>
+      <td>0.97</td>
+      <td>0.658537</td>
+      <td>0.166667</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>404</th>
+      <td>0</td>
+      <td>12k4omz</td>
+      <td>https://reddit.com/12k4omz</td>
+      <td>0.047187</td>
+      <td>2023-04-13 00:00:27</td>
+      <td>40.0</td>
+      <td>60.0</td>
+      <td>10.0</td>
+      <td>11.0</td>
+      <td>0.97</td>
+      <td>0.97</td>
+      <td>0.500000</td>
+      <td>0.100000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>294</th>
+      <td>0</td>
+      <td>12j4vpb</td>
+      <td>https://reddit.com/12j4vpb</td>
+      <td>0.042519</td>
+      <td>2023-04-12 01:15:33</td>
+      <td>36.0</td>
+      <td>53.0</td>
+      <td>7.0</td>
+      <td>10.0</td>
+      <td>0.93</td>
+      <td>0.90</td>
+      <td>0.472222</td>
+      <td>0.428571</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>717</th>
+      <td>0</td>
+      <td>12k74cr</td>
+      <td>https://reddit.com/12k74cr</td>
+      <td>0.040350</td>
+      <td>2023-04-13 01:30:34</td>
+      <td>33.0</td>
+      <td>51.0</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>0.96</td>
+      <td>0.95</td>
+      <td>0.545455</td>
+      <td>0.000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>454</th>
+      <td>0</td>
+      <td>12jf1xw</td>
+      <td>https://reddit.com/12jf1xw</td>
+      <td>0.040056</td>
+      <td>2023-04-12 08:20:59</td>
+      <td>34.0</td>
+      <td>49.0</td>
+      <td>7.0</td>
+      <td>8.0</td>
+      <td>0.87</td>
+      <td>0.83</td>
+      <td>0.441176</td>
+      <td>0.142857</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
 
 
 ```python
