@@ -169,7 +169,8 @@ class Pipeline:
 
 
 if __name__ == "__main__":
-  cfg_file = utils.findConfig()
+  # cfg_file = utils.findConfig()
+  cfg_file = 's3://data-kennethmyers/reddit.cfg'
   cfg = utils.parseConfig(cfg_file)
 
   spark = (
