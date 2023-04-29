@@ -1,13 +1,24 @@
 # Intended to be run from the model/ directory
 # docker build -t predict-etl-packages:latest -f ./Dockerfile.packages .
-# docker run [-idt] --name predictETL-packages [image id]
+# docker run [-idt] --name predictETL-packages --rm predict-etl-packages:latest
 
 # Based on info from https://github.com/mamba-org/micromamba-docker
 # supplemental: https://blog.ceshine.net/post/replicate-conda-environment-in-docker/
+# Stage 1 - java
+FROM --platform=linux/amd64 ibmjava:8-sdk AS java-build
+# Stage 2 - mamba for package installation
 FROM --platform=linux/amd64 mambaorg/micromamba:1.4.2
+
+# Copy Java from stage 1
+COPY --from=java-build /opt/ibm/java /opt/ibm/java
+
+# Set JAVA_HOME and update PATH
+ENV JAVA_HOME=/opt/ibm/java
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Install packages
 COPY . .
+# Allow write permissions for /tmp (needed when saving model from s3 here)
 RUN micromamba install -y -n base -f environment.yml && \
     micromamba clean --all --yes
 
