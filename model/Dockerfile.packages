@@ -17,9 +17,12 @@ ENV JAVA_HOME=/opt/ibm/java
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Install packages
-COPY . .
+COPY ./environment.yml .
 # Allow write permissions for /tmp (needed when saving model from s3 here)
 RUN micromamba install -y -n base -f environment.yml && \
     micromamba clean --all --yes
+
+# Without this you get pyspark issues later where it tries to find python3 and fails
+ENV PYSPARK_PYTHON=/opt/conda/bin/python
 
 CMD ["bash"]

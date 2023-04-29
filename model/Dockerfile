@@ -1,11 +1,18 @@
 # Intended to be run from the model/ directory
 # docker build -t predict-etl:latest -f ./Dockerfile .
 # docker run [-idt] --name predictETL --rm predict-etl
+# test locally with:
+#    docker run -it --name predictETL \
+#      -e AWS_ACCESS_KEY_ID=[access key] \
+#      -e AWS_SECRET_ACCESS_KEY=[secret key] \
+#      --rm predict-etl
 
 FROM predict-etl-packages:latest
 
-CMD /opt/conda/bin/python /tmp/PredictETL.py
+COPY . .
 
-# I originally wanted to use this but it would run into issues when it got to pyspark
-#ENTRYPOINT [ "/opt/conda/bin/python" ]
-#CMD [ "/tmp/PredictETL.py" ]
+# allows us to call executables directly on the path
+ENV PATH=$PATH:/tmp/
+
+# execute python script
+CMD PredictETL.py

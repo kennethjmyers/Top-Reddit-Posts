@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import utils
 import discordUtils as du
 import boto3
