@@ -68,6 +68,7 @@ baseTableDefinition = dict(
   DeletionProtectionEnabled=False
 )
 
+
 def getTableDefinition(tableName, tableDefintion = baseTableDefinition):
   tableDefintion['TableName'] = tableName
   return tableDefintion
