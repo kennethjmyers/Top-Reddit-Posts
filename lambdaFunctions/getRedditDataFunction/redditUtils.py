@@ -26,6 +26,18 @@ def parseConfig(cfg_file: str) -> dict:
 
 
 def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinition.schema, time_filter=None, verbose=False):
+  """
+  Uses PRAW to get data from reddit using defined parameters. Returns data in a list of row based data.
+
+  :param reddit: PRAW reddit object
+  :param subreddit: subreddit name
+  :param topN: Number of posts to return
+  :param view: view to look at the subreddit. rising, top, hot
+  :param schema: schema that describes the data. Dynamo is technically schema-less
+  :param time_filter: range of time to look at the data. all, day, hour, month, week, year
+  :param verbose: if True then prints more information
+  :return: list[Row[schema]], Row is a namedtuple defined by the schema
+  """
   assert topN <= 25  # some, like rising, cap out at 25 and this also is to limit data you're working with
   assert view in {'rising', 'top' , 'hot'}
   if view == 'top':
@@ -67,6 +79,26 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinit
   return dataCollected
 
 
+def deduplicateRedditData(data):
+  """
+  Deduplicates the reddit data. Sometimes there are duplicate keys which throws an error
+  when writing to dynamo. It is unclear why this happens but I suspect it is an issue with PRAW.
+
+  :param data: list[Row[schema]]
+  :return: deduplicated data
+  """
+  postIds = set()
+  newData = []
+  # there really shouldn't be more than 1 loadTSUTC for a postId since that is generated
+  # on our side, but I wanted to handle that since it is part of the key
+  data = sorted(data, key=lambda x: x.loadTSUTC)[::-1]
+  for d in data:
+    if d.postId not in postIds:
+      postIds.add(d.postId)
+      newData.append(d)
+  return newData
+
+
 def getOrCreateTable(tableDefinition, dynamodb_resource):
     existingTables = [a.name for a in dynamodb_resource.tables.all()]  # client method: dynamodb_client.list_tables()['TableNames']
     tableName = tableDefinition['TableName']
@@ -93,11 +125,11 @@ def batchWriter(table, data, schema):
   """
   https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html#batch-writing
   I didn't bother with dealing with duplicates because shouldn't be a problem with this type of data
-  no built in way to get reponses with batch_writer https://peppydays.medium.com/getting-response-of-aws-dynamodb-batchwriter-request-2aa3f81019fa
+  no built in way to get responses with batch_writer https://peppydays.medium.com/getting-response-of-aws-dynamodb-batchwriter-request-2aa3f81019fa
 
-  :param table:
-  :param data:
-  :param schema:
+  :param table: boto3 table object
+  :param data: list[Row[schema]]
+  :param schema: OrderedDict containing the dynamodb schema (dynamo technically schema-less)
   :return: None
   """
   columns = schema.keys()
