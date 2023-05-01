@@ -7,21 +7,47 @@
 This project intends to demonstrate a knowledge of:
 
 1. Data Engineering and ETL - the collection and cleaning of data
-2. Working within the AWS ecosystem - tools used include DynamoDB, Lambda functions, S3, RDS, EventBridge, IAM and IAM Identity Center (managing permission sets, users, roles, policies, etc)
+2. Working within the AWS ecosystem - tools used include DynamoDB, Lambda functions, S3, RDS, EventBridge, IAM (managing permission sets, users, roles, policies, etc), ECR, and Fargate.
 3. Data Science and Analysis - building out a simple model using collected data
 
 **Make sure to read the [Wiki](https://github.com/kennethjmyers/Top-Reddit-Posts/wiki) for set-up instructions.**
 
+### A Note on Costs
+
+This project tries to maximize the variety of tools to use in AWS while keeping costs low, particularly on the AWS Free Tier. 
+
+If you are on the AWS free tier, then the primary cost is the use of Fargate. Currently, while returning results for a single subreddit every 10 minutes, the cost is about $0.20/day or about $6/month. 
+
+Keep an eye on the costs though as this project uses S3, RDS, Lambda, and other services which are free within limits but will start to incur costs if you go beyond their trial limits or continue past the trial period.
+
 ## What is this?
 
-This project collects data from rising posts on Reddit and identify features that predict an upcoming viral post. Why? Consider someone who wanted to farm comment karma by getting to a viral post relatively early and voicing their input or humor. One could gather that data and notify themselves if a submission showed viral promise. I have no intention of actually using it in this way but it was the hypothetical around which I built this project. 
+This project collects data from rising posts on Reddit and identifies features that predict an upcoming viral post. It then automates the prediction process via a docker container deployed on AWS Fargate and notifies the users of potentially viral posts. 
+
+Currently the model is a Logistic Regression model and it steps up the top ~2% of posts based on testing data.
+
+### Why? 
+
+It takes a lot of time to scroll Reddit for new and rising posts to contribute to the conversation early enough where people might see it. This allows you to cut out much of the work in continuous searching and automate the process.
+
+### Example
+
+Below is a sample of [the first post](https://www.reddit.com/r/pics/comments/132ueaa/the_first_photo_of_the_chernobyl_plant_taken_by/) the bot found when it was deployed. When it first notified about the post the post had only 29 comments but it went on to garner over 57k upvotes and over 1.4k comments. 
+
+It is easy to see how advantageous it can be to find future viral posts before they hit the front page.
+
+![](./images/bot-example.png)
+
+### Results
+
+When I started using the bot, my account of 12 years had 11,700 karma. After two days of testing I had grown that to >13,000 karma, an 11% increase and over 500 karma each day. User results can vary, however, as it requires continuous user monitoring for new notifications and is dependent upon the user's replies and understanding of Reddit and the subreddits' userbases.
+
+[Plan to add monitoring results here once implemented]
 
 ## Requirements
 
 1. python == 3.7
-2. [praw](https://github.com/praw-dev/praw) == 7.7.0
-3. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-4. Spark == 3.3.0
+2. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ## Components
 
@@ -31,4 +57,4 @@ This project collects data from rising posts on Reddit and identify features tha
     1. Currently EMR is not being utilized for the ETL process but the ETL process was written in pyspark so that it could scale on EMR with growing data.  
     2. DynamoDB is not really meant for bulk read and writes. As such, it is not ideal for large ETL processes. It was chosen to demonstrate knowledge in an additional datastore and because it is available to the AWS free tier. When reading data from DynamoDB to Spark, I implemented data chunking to gather multiple DynamoDB partitions before they are distributed with Spark to optimize the reads.
     3. Model data and Model stored on S3.
-4. Docker Container deployed on ECS that automates ETL process, stage new data to Postgres database on RDS and send notifications via SNS.
+4. [Docker image](model/Dockerfile) hosted on ECR and deployed on ECS via Fargate that automates [prediction ETL process](model/PredictETL.py), stage predicted results to Postgres database on RDS and send notifications via Discord to the user.

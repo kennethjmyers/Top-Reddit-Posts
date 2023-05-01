@@ -1,4 +1,4 @@
-import utils
+import redditUtils as ru
 import tableDefinition
 import praw
 import boto3
@@ -10,8 +10,8 @@ dynamodb_resource = boto3.resource('dynamodb')
 def lambda_handler(event, context):
   # Initializations
   subreddit = "pics"
-  cfg_file = utils.findConfig()
-  cfg = utils.parseConfig(cfg_file)
+  cfg_file = ru.findConfig()
+  cfg = ru.parseConfig(cfg_file)
 
   CLIENTID = cfg['CLIENTID']
   CLIENTSECRET = cfg['CLIENTSECRET']
@@ -30,24 +30,26 @@ def lambda_handler(event, context):
   schema = tableDefinition.schema
   topN = 25
   view = 'rising'
-  risingData = utils.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=schema, topN=topN)
+  risingData = ru.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=schema, topN=topN)
+  risingData = ru.deduplicateRedditData(risingData)
 
   # Push to DynamoDB
   tableName = view
   risingRawTableDefinition = tableDefinition.getTableDefinition(tableName)
-  risingTable = utils.getOrCreateTable(risingRawTableDefinition, dynamodb_resource)
-  utils.batchWriter(risingTable, risingData, schema)
+  risingTable = ru.getOrCreateTable(risingRawTableDefinition, dynamodb_resource)
+  ru.batchWriter(risingTable, risingData, schema)
 
   # Get Hot Reddit data
   schema = tableDefinition.schema
   topN = 3
   view = 'hot'
-  hotData = utils.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=schema, topN=topN)
+  hotData = ru.getRedditData(reddit=reddit, subreddit=subreddit, view=view, schema=schema, topN=topN)
+  hotData = ru.deduplicateRedditData(hotData)
 
   # Push to DynamoDB
   tableName = view
   hotTableDefinition = tableDefinition.getTableDefinition(tableName)
-  hotTable = utils.getOrCreateTable(hotTableDefinition, dynamodb_resource)
-  utils.batchWriter(hotTable, hotData, schema)
+  hotTable = ru.getOrCreateTable(hotTableDefinition, dynamodb_resource)
+  ru.batchWriter(hotTable, hotData, schema)
 
   return 200
