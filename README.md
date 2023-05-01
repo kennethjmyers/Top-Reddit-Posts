@@ -32,7 +32,7 @@ It takes a lot of time to scroll Reddit for new and rising posts to contribute t
 
 ### Example
 
-Below is a sample of [the first post](https://www.reddit.com/r/pics/comments/132ueaa/the_first_photo_of_the_chernobyl_plant_taken_by/) the bot found when it was deployed. When it first notified about the post the post had only 29 comments but it went on to garner over 57k upvotes and over 1.4k comments. 
+Below is a sample of [the first post](https://www.reddit.com/r/pics/comments/132ueaa/the_first_photo_of_the_chernobyl_plant_taken_by/) the bot found when it was deployed. When it first sent the notification, the post had only 29 comments but it went on to garner over 57k upvotes and over 1.4k comments. 
 
 It is easy to see how advantageous it can be to find future viral posts before they hit the front page.
 
