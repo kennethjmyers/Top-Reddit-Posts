@@ -16,6 +16,7 @@ done
 : ${branch:?Missing -b}   # checks if these have been set https://unix.stackexchange.com/questions/621004/bash-getopts-mandatory-arguments
 echo "branch: $branch";
 
+git checkout main
 git pull origin main
 git checkout $branch
 git branch -m ${branch}-old  # rename the branch
