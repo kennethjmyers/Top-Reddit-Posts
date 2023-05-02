@@ -1,1 +1,2 @@
+# filter out ipynb from github metrics
 *.ipynb linguist-vendored
