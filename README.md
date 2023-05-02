@@ -58,3 +58,5 @@ When I started using the bot, my account of 12 years had 11,700 karma. After two
     2. DynamoDB is not really meant for bulk read and writes. As such, it is not ideal for large ETL processes. It was chosen to demonstrate knowledge in an additional datastore and because it is available to the AWS free tier. When reading data from DynamoDB to Spark, I implemented data chunking to gather multiple DynamoDB partitions before they are distributed with Spark to optimize the reads.
     3. Model data and Model stored on S3.
 4. [Docker image](model/Dockerfile) hosted on ECR and deployed on ECS via Fargate that automates [prediction ETL process](model/PredictETL.py), stage predicted results to Postgres database on RDS and send notifications via Discord to the user.
+
+There is a [separate branch](https://github.com/kennethjmyers/Top-Reddit-Posts/tree/notebooks) dedicated to original iPython Notebooks, but I did not want these on the main branch. Usually a markdown version of these branches can be found on the main branch.
