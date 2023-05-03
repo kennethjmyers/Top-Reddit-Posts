@@ -15,9 +15,10 @@ os.environ['TZ'] = 'UTC'
 
 
 class Pipeline:
-  def __init__(self, cfg, model, spark: SparkSession, threshold=0):
+  def __init__(self, cfg, model, modelName, spark: SparkSession, threshold=0):
     self.cfg = cfg
     self.model = model
+    self.modelName = modelName
     self.spark = spark
     self.threshold = threshold  # if 0, step up everything
     self.dynamodb_resource = boto3.resource('dynamodb', region_name='us-east-2')  # higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')
@@ -70,6 +71,9 @@ class Pipeline:
     print("Applying transformations to Rising Data...")
     aggData = utils.applyDataTransformations(postIdData)
     aggData = aggData.toPandas().fillna(0)
+
+    # add model name
+    aggData['modelName'] = [self.modelName for _ in range(len(aggData))]
 
     # Generate Predictions on Data
     aggData = self.createPredictions(aggData)
@@ -187,10 +191,10 @@ if __name__ == "__main__":
   )
 
   # grab latest model
-  model = utils.getLatestModel()
+  model, modelName = utils.getLatestModel()
 
-  threshold = 0.0400  # eventually will probably put this in its own config file, maybe it differs per subreddit
-  pipeline = Pipeline(cfg=cfg, model=model, spark=spark, threshold=threshold)
+  threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
+  pipeline = Pipeline(cfg=cfg, model=model, modelName=modelName, spark=spark, threshold=threshold)
   pipeline.extract()
   data = pipeline.transform()
   pipeline.load(data=data, tableName='scoredData')
