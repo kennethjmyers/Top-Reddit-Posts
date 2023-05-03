@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+# ./ModelETL.py -o redditAggregatedData-20230502.parquet -c 1000  <- replace the args
 import utils
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
@@ -7,6 +8,7 @@ import boto3
 from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import udf
 import os
+import argparse
 
 
 # Forcing Timezone keeps things consistent with running on aws and without it timestamps get additional
@@ -38,7 +40,7 @@ class Pipeline:
     self.postIdData = None
     self.uniqueHotPostIds = None
 
-  def extract(self):
+  def extract(self, chunkSize=1000):
     ###################
     # Get Rising Data #
     ###################
@@ -57,7 +59,7 @@ class Pipeline:
     # it can also be slow because converts each dynamodb partition to a spark dataframe,
     # this was done so that it would scale better on a distributed system
     # over keeping all the data in python in one node and trying to then move it to spark
-    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100)
+    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=chunkSize)
     pandasTestDf = self.postIdData.limit(5).toPandas()
     print(pandasTestDf.to_string())
     print("Finished gathering Rising Data.")
@@ -137,7 +139,15 @@ class Pipeline:
 
 
 if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-o", "--output", help="Output file name to save results to", required=True)
+  parser.add_argument("-c", "--chunkSize", help="Number of postIds to read in before converting to spark df", default=1000, required=False, type=int)
+  args = parser.parse_args()
+  o = args.output  # ie redditAggregatedData.parquet
+  chunkSize = args.chunkSize  # ie 1000
+  outputFilename = f"s3a://data-kennethmyers/model_data/{o}"
+
   pipeline = Pipeline()
-  pipeline.extract()
+  pipeline.extract(chunkSize=chunkSize)
   data = pipeline.transform()
-  pipeline.load(data, f"s3a://data-kennethmyers/model_data/redditAggregatedData.parquet")
+  pipeline.load(data, outputFilename)
