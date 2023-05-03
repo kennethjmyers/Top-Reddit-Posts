@@ -26,7 +26,7 @@ In [April 2023 Reddit announced](https://www.nytimes.com/2023/04/18/technology/r
 
 This project collects data from rising posts on Reddit and identifies features that predict an upcoming viral post. It then automates the prediction process via a docker container deployed on AWS Fargate and notifies the users of potentially viral posts. 
 
-Currently the model is a Logistic Regression model and it steps up the top ~2% of posts based on testing data.
+Currently the model is a GBM model and it steps up the top 3% of posts based on testing data.
 
 ### Why? 
 
