@@ -54,14 +54,14 @@ baseTableDefinition = dict(
                 ]
           },
           'ProvisionedThroughput': {  # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html#GSI.ThroughputConsiderations
-              'ReadCapacityUnits': 1,  # 1 = 4KB/s I think
+              'ReadCapacityUnits': 6,  # 1 = 4KB/s I think
               'WriteCapacityUnits': 1  # 1 = 1KB/s
           }
       },
   ],
   BillingMode='PROVISIONED',  # recommended for consistent work
   ProvisionedThroughput={  # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ServiceQuotas.html#default-limits-throughput-capacity-modes
-      'ReadCapacityUnits': 1,
+      'ReadCapacityUnits': 6,
       'WriteCapacityUnits': 1
   },
   TableClass='STANDARD',

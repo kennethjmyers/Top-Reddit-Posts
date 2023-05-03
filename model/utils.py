@@ -199,4 +199,4 @@ def getLatestModel():
   s3_client = boto3.client('s3', region_name='us-east-2')
   s3_client.download_file('data-kennethmyers', latestModelLoc, modelSaveLoc)
   model = pickle.load(open(modelSaveLoc, 'rb'))
-  return model
+  return model, latestModelLoc
