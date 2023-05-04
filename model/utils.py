@@ -192,7 +192,7 @@ def getLatestModel():
   s3 = boto3.resource('s3', region_name='us-east-2')
   bucketName = 'data-kennethmyers'
   bucket = s3.Bucket(bucketName)
-  objs = bucket.objects.filter(Prefix='models/Reddit_LR_model_')
+  objs = bucket.objects.filter(Prefix='models/Reddit_model_')
   latestModelLoc = sorted([obj.key for obj in objs])[-1]
   print(f"Latest model location: s3a://{bucketName}/{latestModelLoc}")
   modelSaveLoc = './pickledModels/latestModel.sav'
