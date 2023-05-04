@@ -1,5 +1,6 @@
+#!/bin/bash
 # this script applies necessary changes to files and directories, builds the images, and pushes to aws
-# sh buildAndPushDockerImage.sh -a [account_number]
+# ./buildAndPushDockerImage.sh -a [account_number]
 
 while getopts a: flag
 do
