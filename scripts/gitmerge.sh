@@ -24,4 +24,5 @@ git checkout main
 git checkout -b $branch
 git merge --squash ${branch}-old  # merge old branch to the new one
 git commit
+git push origin updates --force  # this just keeps the origin/updates branch in line with what we now have
 git branch -D ${branch}-old  # delete old branch
