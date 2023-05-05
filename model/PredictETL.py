@@ -6,7 +6,6 @@ import os
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import  Key, Attr
 from pyspark.sql import SparkSession
-from sqlalchemy import create_engine
 import pandas as pd
 import sqlUtils as su
 
@@ -15,18 +14,17 @@ os.environ['TZ'] = 'UTC'
 
 
 class Pipeline:
-  def __init__(self, cfg, model, modelName, spark: SparkSession, threshold=0):
+  def __init__(self, cfg, dynamodb_resource, engine, model, modelName, spark: SparkSession, threshold=0):
     self.cfg = cfg
+    self.dynamodb_resource = dynamodb_resource
+    self.engine = engine
     self.model = model
     self.modelName = modelName
     self.spark = spark
     self.threshold = threshold  # if 0, step up everything
-    self.dynamodb_resource = boto3.resource('dynamodb', region_name='us-east-2')  # higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')
 
     # initializations - passed between functions
     self.postIdData = None
-    self.engine = create_engine(
-      f"postgresql+pg8000://{cfg['USERNAME']}:{cfg['PASSWORD']}@{cfg['HOST']}:{cfg['PORT']}/{cfg['DATABASE']}")
 
   def extract(self):
     """
@@ -48,15 +46,15 @@ class Pipeline:
     postIdQueryResult = risingTable.query(
       IndexName='byLoadDate',
       KeyConditionExpression=Key('loadDateUTC').eq(fifteenMinAgoDate) & Key('loadTimeUTC').gte(fifteenMinAgoTime),
-      FilterExpression=Attr('timeElapsedMin').eq(60),
+      FilterExpression=Attr('timeElapsedMin').gte(45),
       ProjectionExpression='postId'
-    )['Items']
-    postsOfInterest = {res['postId'] for res in postIdQueryResult}
+    )
+    postIdQueryItems = postIdQueryResult['Items']
+    postsOfInterest = {res['postId'] for res in postIdQueryItems}
 
     print("Number of posts found:", len(postsOfInterest))
 
-    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100,
-                                                    FilterExpression=Attr('timeElapsedMin').eq(60))
+    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100)
 
     pandasTestDf = self.postIdData.limit(5).toPandas()
     print(pandasTestDf.to_string())
@@ -81,6 +79,7 @@ class Pipeline:
     print(aggData.to_string())
 
     # filter out data we've seen but the decision hasn't changed
+    print("filter out existing data")
     if filterExistingData and len(aggData) > 0:
       aggData = self.filterExistingData(data=aggData)
       print(f"Data count after filtering existing data: {len(aggData)}")
@@ -152,6 +151,7 @@ class Pipeline:
     :param viralData: aggregated data that has been subsetted to what is viral
     :return: The data that we notified was viral
     """
+    cfg = self.cfg
     if len(viralData) < 1:
       print("No viral data. Nothing to notify.")
       return
@@ -174,6 +174,9 @@ class Pipeline:
 
 
 if __name__ == "__main__":
+  threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
+  # modelName = 'models/Reddit_model_GBM_20230503-235329.sav'
+
   # cfg_file = utils.findConfig()
   cfg_file = 's3://data-kennethmyers/reddit.cfg'
   cfg = utils.parseConfig(cfg_file)
@@ -192,9 +195,12 @@ if __name__ == "__main__":
 
   # grab latest model
   model, modelName = utils.getLatestModel()
+  # model = utils.getModel(modelName)  # alternative, pass a specific model
 
-  threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
-  pipeline = Pipeline(cfg=cfg, model=model, modelName=modelName, spark=spark, threshold=threshold)
+  dynamodb_resource = boto3.resource('dynamodb', region_name='us-east-2')  # higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')
+  engine = su.makeEngine(cfg)
+
+  pipeline = Pipeline(cfg=cfg, dynamodb_resource=dynamodb_resource, engine=engine, model=model, modelName=modelName, spark=spark, threshold=threshold)
   pipeline.extract()
   data = pipeline.transform()
   pipeline.load(data=data, tableName='scoredData')
