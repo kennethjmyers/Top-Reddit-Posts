@@ -118,7 +118,7 @@ def engine(cfg):
 # as I mentioned earlier, I'd like to change this so the dynamodb resource is a fixture but it kept throwing errors
 @mock_dynamodb
 def test_extract(sampleRisingData, cfg, engine, model, modelName, spark, threshold):
-  dynamodb = boto3.resource('dynamodb')
+  dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
   # create table and write to sample data
   tableName = 'rising'
   td = tableDefinition.getTableDefinition(tableName=tableName)
