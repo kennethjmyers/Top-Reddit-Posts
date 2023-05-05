@@ -8,7 +8,16 @@ from decimal import Decimal
 
 
 def findConfig() -> str:
-  for f in ['./reddit.cfg', '../reddit.cfg', '../../reddit.cfg']:
+  # searches for main file, falls back to example file if not found
+  fileList = [
+    './reddit.cfg',
+    '../reddit.cfg',
+    '../../reddit.cfg',
+    './example_reddit.cfg',
+    '../example_reddit.cfg',
+    '../../example_reddit.cfg'
+  ]
+  for f in fileList:
     if os.path.exists(f):
       return f
   raise RuntimeError("Reddit config file not found. Place it in either ./ or ../")

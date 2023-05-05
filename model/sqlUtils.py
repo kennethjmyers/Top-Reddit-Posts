@@ -3,6 +3,19 @@ import sqlalchemy
 import uuid
 import os
 from sqlalchemy import text
+from sqlalchemy import create_engine
+
+
+def makeEngine(cfg):
+  """
+  Returns a sql engine using passed config
+
+  :param cfg: dictionary containing username, password, host, port, and database
+  :return: engine
+  """
+  return create_engine(
+      f"postgresql+pg8000://{cfg['USERNAME']}:{cfg['PASSWORD']}@{cfg['HOST']}:{cfg['PORT']}/{cfg['DATABASE']}"
+  )
 
 
 def upsert_df(df: pd.DataFrame, table_name: str, engine: sqlalchemy.engine.Engine):

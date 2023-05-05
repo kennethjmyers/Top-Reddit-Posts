@@ -1,5 +1,6 @@
 boto3==1.26.117
 matplotlib==3.3.4
+moto[dynamodb,s3]==4.1.8
 numpy==1.15  # required by pyspark
 pandas==1.0.5  # required by pyspark
 pre-commit==2.21.0
@@ -8,6 +9,7 @@ pg8000==1.29.4  # this was easier to pip install than psycopg2
 pyarrow==2.0.0
 pyspark==3.3.0  # using this version because py37 deprecated in pyspark 3.4.0
 pytest==7.3.1
+pytest-cov==4.0.0
 scikit-learn==1.0.2
 seaborn==0.11.2
 shap==0.41.0
