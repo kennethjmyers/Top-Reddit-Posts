@@ -1,5 +1,7 @@
 # Top Reddit Posts
 
+[![codecov](https://codecov.io/gh/kennethjmyers/Top-Reddit-Posts/branch/main/graph/badge.svg?token=ACZEU30AHM)](https://codecov.io/gh/kennethjmyers/Top-Reddit-Posts)
+
 ![](./images/architecture-diagram.png)
 
 ## Purpose
