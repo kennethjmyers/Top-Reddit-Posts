@@ -17,7 +17,16 @@ def findConfig() -> str:
 
   :return: string of config file location
   """
-  for f in ['./reddit.cfg', '../reddit.cfg', '../../reddit.cfg']:
+  # searches for main file, falls back to example file if not found
+  fileList = [
+    './reddit.cfg',
+    '../reddit.cfg',
+    '../../reddit.cfg',
+    './example_reddit.cfg',
+    '../example_reddit.cfg',
+    '../../example_reddit.cfg'
+  ]
+  for f in fileList:
     if os.path.exists(f):
       return f
   raise RuntimeError("Reddit config file not found. Place it in either ./ or ../")
@@ -188,15 +197,24 @@ def getTarget(postId:str, uniqueHotPostIds:set):
     return 0
 
 
-def getLatestModel():
+def getLatestModel(bucketName = 'data-kennethmyers'):
+  print("Finding latest model by filename")
   s3 = boto3.resource('s3', region_name='us-east-2')
-  bucketName = 'data-kennethmyers'
   bucket = s3.Bucket(bucketName)
   objs = bucket.objects.filter(Prefix='models/Reddit_model_')
   latestModelLoc = sorted([obj.key for obj in objs])[-1]
-  print(f"Latest model location: s3a://{bucketName}/{latestModelLoc}")
+  model = getModel(latestModelLoc, bucketName=bucketName)
+  return model, latestModelLoc
+
+
+def getModel(modelName, bucketName = 'data-kennethmyers'):
   modelSaveLoc = './pickledModels/latestModel.sav'
   s3_client = boto3.client('s3', region_name='us-east-2')
-  s3_client.download_file('data-kennethmyers', latestModelLoc, modelSaveLoc)
+  s3_client.download_file(bucketName, modelName, modelSaveLoc)
+  print(f"Model location: s3a://{bucketName}/{modelName}")
   model = pickle.load(open(modelSaveLoc, 'rb'))
-  return model, latestModelLoc
+  return model
+
+
+def loadModel(modelSaveLoc):
+  return pickle.load(open(modelSaveLoc, 'rb'))
