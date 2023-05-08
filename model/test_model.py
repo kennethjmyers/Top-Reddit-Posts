@@ -1,6 +1,6 @@
 import pytest
 from PredictETL import Pipeline
-import utils
+import modelUtils as mu
 import sqlUtils as su
 import os
 from datetime import datetime, timedelta
@@ -41,8 +41,8 @@ def sampleRisingData():
   return d.to_json(orient='records')
 
 
-# I would like to get this working but I tried for a while and it always runs into errors
-# when you start trying to pass it to test functions, this may help https://stackoverflow.com/questions/49943938/unrecognizedclientexception-when-using-botocore-stubber
+# I would like to get this working but I tried for a while and it always runs into errors when you start trying to pass it to test functions
+# this may help https://stackoverflow.com/questions/49943938/unrecognizedclientexception-when-using-botocore-stubber
 # @pytest.fixture
 # @mock_dynamodb
 # def dynamodb_resource(sampleRisingData):
@@ -86,8 +86,8 @@ def spark():
 
 @pytest.fixture(scope='module')
 def model():
-  testFile = os.path.join(THIS_DIR, 'pickledModels/Reddit_model_LR_20230414-061009.sav')
-  return utils.loadModel(modelSaveLoc=testFile)
+  testFile = os.path.join(THIS_DIR, 'pickledModels/Reddit_model_20230414-061009_LR.sav')
+  return mu.loadModel(modelSaveLoc=testFile)
 
 
 @pytest.fixture(scope='module')
@@ -275,6 +275,6 @@ if __name__=='__main__':
   )
 
   # grab latest model
-  model=utils.getLatestModel()
+  model=mu.getLatestModel()
 
   #test_Pipeline(model, spark, threshold=0.0400)
