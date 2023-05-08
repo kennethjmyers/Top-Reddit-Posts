@@ -2,6 +2,7 @@ from configparser import ConfigParser
 import json
 import boto3
 import os
+from collections import defaultdict
 
 
 def findConfig() -> str:
@@ -47,7 +48,7 @@ def parseConfig(
   if keysToRead is None:
     keysToRead = DEFAULT_KEYS
   parser = ConfigParser()
-  cfg = dict()
+  cfg = defaultdict(dict)
 
   if cfgFile[:2].lower() == 's3':
     s3 = boto3.client('s3')
@@ -60,5 +61,5 @@ def parseConfig(
     _ = parser.read(cfgFile)
   for k, vList in keysToRead.items():
     for v in vList:
-      cfg[v] = json.loads(parser.get(k, v))  # json helps with list conversion
+      cfg[k][v] = json.loads(parser.get(k, v))  # json helps with list conversion
   return cfg

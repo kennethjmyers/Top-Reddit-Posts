@@ -29,8 +29,8 @@ spark = (
   .config('spark.driver.extraJavaOptions', '-Duser.timezone=GMT')
   .config('spark.executor.extraJavaOptions', '-Duser.timezone=GMT')
   .config('spark.sql.session.timeZone', 'UTC')
-  .config("fs.s3a.access.key", cfg['ACCESSKEY'])
-  .config("fs.s3a.secret.key", cfg['SECRETKEY'])
+  .config("fs.s3a.access.key", cfg['S3_access']['ACCESSKEY'])
+  .config("fs.s3a.secret.key", cfg['S3_access']['SECRETKEY'])
   .getOrCreate()
 )
 

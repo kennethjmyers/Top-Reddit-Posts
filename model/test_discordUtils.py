@@ -16,7 +16,7 @@ def cfg():
 
 
 def test_makeHeader(cfg):
-  token=cfg['BOTTOKEN']
+  token=cfg['Discord']['BOTTOKEN']
   assert du.makeHeader(token) == {"Authorization": f"Bot {token}"}
 
 
@@ -40,7 +40,8 @@ def test_createDM(cfg):
       }
     ]
   }
-  headers = du.makeHeader(cfg['BOTTOKEN'])
+  discordcfg = cfg['Discord']
+  headers = du.makeHeader(discordcfg['BOTTOKEN'])
   # https://github.com/getsentry/responses/blob/master/README.rst#responses-as-a-context-manager
   with responses.RequestsMock() as rsps:
     rsps.add(
@@ -50,7 +51,7 @@ def test_createDM(cfg):
       json=sampleJson,
       status=200
     )
-    dm = du.createDM(cfg['BOTTOKEN'], cfg['MYSNOWFLAKEID'])
+    dm = du.createDM(discordcfg['BOTTOKEN'], discordcfg['MYSNOWFLAKEID'])
   assert dm == sampleJson
 
 
@@ -88,9 +89,10 @@ def sampleDiscordMessageJson():
 
 
 def test_createMessage(cfg, sampleDiscordMessageJson):
-  headers = du.makeHeader(cfg['BOTTOKEN'])
+  discordcfg = cfg['Discord']
+  headers = du.makeHeader(discordcfg['BOTTOKEN'])
   with responses.RequestsMock() as rsps:
-    for channelId in cfg['CHANNELSNOWFLAKEID']:
+    for channelId in discordcfg['CHANNELSNOWFLAKEID']:
       rsps.add(
         responses.POST,
         f"https://discord.com/api/v10/channels/{channelId}/messages",
@@ -98,14 +100,15 @@ def test_createMessage(cfg, sampleDiscordMessageJson):
         json=sampleDiscordMessageJson,
         status=200
       )
-      res = du.createMessage(cfg['BOTTOKEN'], channelId, 'test')
+      res = du.createMessage(discordcfg['BOTTOKEN'], channelId, 'test')
   assert res.json() == sampleDiscordMessageJson
 
 
 def test_discordMessageHandler(cfg, sampleDiscordMessageJson):
-  headers = du.makeHeader(cfg['BOTTOKEN'])
+  discordcfg = cfg['Discord']
+  headers = du.makeHeader(discordcfg['BOTTOKEN'])
   with responses.RequestsMock() as rsps:
-    for channelId in cfg['CHANNELSNOWFLAKEID']:
+    for channelId in discordcfg['CHANNELSNOWFLAKEID']:
       rsps.add(
         responses.POST,
         f"https://discord.com/api/v10/channels/{channelId}/messages",
@@ -113,14 +116,15 @@ def test_discordMessageHandler(cfg, sampleDiscordMessageJson):
         json=sampleDiscordMessageJson,
         status=200
       )
-      du.discordMessageHandler(cfg['BOTTOKEN'], channelId, 'test')
+      du.discordMessageHandler(discordcfg['BOTTOKEN'], channelId, 'test')
 
 
 @pytest.mark.xfail(reason="status code != 200")
 def test_discordMessageHandler404(cfg, sampleDiscordMessageJson):
-  headers = du.makeHeader(cfg['BOTTOKEN'])
+  discordcfg = cfg['Discord']
+  headers = du.makeHeader(discordcfg['BOTTOKEN'])
   with responses.RequestsMock() as rsps:
-    for channelId in cfg['CHANNELSNOWFLAKEID']:
+    for channelId in discordcfg['CHANNELSNOWFLAKEID']:
       rsps.add(
         responses.POST,
         f"https://discord.com/api/v10/channels/{channelId}/messages",
@@ -128,4 +132,4 @@ def test_discordMessageHandler404(cfg, sampleDiscordMessageJson):
         json=sampleDiscordMessageJson,
         status=404
       )
-      du.discordMessageHandler(cfg['BOTTOKEN'], channelId, 'test')
+      du.discordMessageHandler(discordcfg['BOTTOKEN'], channelId, 'test')
