@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import  Key, Attr
 import pyspark.sql.functions as F
 import pandas as pd
 import pickle
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def dateToStr(date):
@@ -153,17 +154,19 @@ def getTarget(postId:str, uniqueHotPostIds:set):
     return 0
 
 
-def getLatestModel(bucketName = 'data-kennethmyers'):
+def getLatestModel(bucketName = 'data-kennethmyers', modelSaveLoc=None):
   print("Finding latest model by filename")
   s3 = boto3.resource('s3', region_name='us-east-2')
   bucket = s3.Bucket(bucketName)
   objs = bucket.objects.filter(Prefix='models/Reddit_model_')
   latestModelLoc = sorted([obj.key for obj in objs])[-1]
-  model = getModel(latestModelLoc, bucketName=bucketName)
+  model = getModel(latestModelLoc, bucketName=bucketName, modelSaveLoc=modelSaveLoc)
   return model, latestModelLoc
 
 
-def getModel(modelName, bucketName = 'data-kennethmyers', modelSaveLoc = './pickledModels/latestModel.sav'):
+def getModel(modelName, bucketName='data-kennethmyers', modelSaveLoc=None):
+  if modelSaveLoc is None:
+    modelSaveLoc = os.path.join(THIS_DIR, 'pickledModels/latestModel.sav')
   s3_client = boto3.client('s3', region_name='us-east-2')
   s3_client.download_file(bucketName, modelName, modelSaveLoc)
   print(f"Model location: s3a://{bucketName}/{modelName}")
