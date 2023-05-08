@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 # ./ModelETL.py -o redditAggregatedData-20230502.parquet -c 1000  <- replace the args
-import utils
+import modelUtils as mu
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 import boto3
@@ -51,10 +51,10 @@ class Pipeline:
     print("Gathering Rising Data...")
     risingTable = self.dynamodb_resource.Table('rising')
 
-    datesToQuery = utils.daysUntilNow()
+    datesToQuery = mu.daysUntilNow()
     print("Dates to query:", datesToQuery)
 
-    postIdQueryResult = utils.queryByRangeOfDates(risingTable, datesToQuery)  # [{'postId': XXXXXX}, {'postId': YYYYYY}...]
+    postIdQueryResult = mu.queryByRangeOfDates(risingTable, datesToQuery)  # [{'postId': XXXXXX}, {'postId': YYYYYY}...]
     postsOfInterest = {res['postId'] for res in postIdQueryResult}
 
     print("Number of posts found:", len(postsOfInterest))
@@ -63,7 +63,7 @@ class Pipeline:
     # it can also be slow because converts each dynamodb partition to a spark dataframe,
     # this was done so that it would scale better on a distributed system
     # over keeping all the data in python in one node and trying to then move it to spark
-    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=chunkSize)
+    self.postIdData = mu.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=chunkSize)
     pandasTestDf = self.postIdData.limit(5).toPandas()
     print(pandasTestDf.to_string())
     print("Finished gathering Rising Data.")
@@ -74,7 +74,7 @@ class Pipeline:
     print("Gathering Hot Data...")
     hotTable = self.dynamodb_resource.Table('hot')
 
-    hotPosts = utils.queryByRangeOfDates(hotTable, datesToQuery)
+    hotPosts = mu.queryByRangeOfDates(hotTable, datesToQuery)
     self.uniqueHotPostIds = set([p['postId'] for p in hotPosts])
 
     # the hot posts are usually not a very long list and we really only need this for the purpose of creating targets
@@ -89,10 +89,10 @@ class Pipeline:
     postIdData = self.postIdData
     uniqueHotPostIds = self.uniqueHotPostIds
     print("Applying transformations to Rising Data...")
-    aggData = utils.applyDataTransformations(postIdData)
+    aggData = mu.applyDataTransformations(postIdData)
 
     print("Creating Targets for Rising Data from Hot Data")
-    getTargetUDF = udf(lambda x: utils.getTarget(x, uniqueHotPostIds), returnType=IntegerType())
+    getTargetUDF = udf(lambda x: mu.getTarget(x, uniqueHotPostIds), returnType=IntegerType())
 
     aggData = aggData.withColumn('target', getTargetUDF(F.col('postId')))
     print("Finished gathering data targets.")

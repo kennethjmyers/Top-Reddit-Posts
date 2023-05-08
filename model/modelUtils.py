@@ -16,6 +16,12 @@ def dateToStr(date):
 
 
 def daysUntilNow(startingDate = datetime.strptime('2023-04-09', '%Y-%m-%d').date()):
+  """
+  Create a list of date-strings from a starting date until today.
+
+  :param startingDate:
+  :return:
+  """
   now = datetime.utcnow().date()
   dates = [dateToStr(startingDate)]
   thisDate = startingDate
@@ -157,8 +163,7 @@ def getLatestModel(bucketName = 'data-kennethmyers'):
   return model, latestModelLoc
 
 
-def getModel(modelName, bucketName = 'data-kennethmyers'):
-  modelSaveLoc = './pickledModels/latestModel.sav'
+def getModel(modelName, bucketName = 'data-kennethmyers', modelSaveLoc = './pickledModels/latestModel.sav'):
   s3_client = boto3.client('s3', region_name='us-east-2')
   s3_client.download_file(bucketName, modelName, modelSaveLoc)
   print(f"Model location: s3a://{bucketName}/{modelName}")

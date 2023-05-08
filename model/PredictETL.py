@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import utils
+import modelUtils
 import discordUtils as du
 import boto3
 import os
@@ -58,7 +58,7 @@ class Pipeline:
 
     print("Number of posts found:", len(postsOfInterest))
 
-    self.postIdData = utils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100)
+    self.postIdData = modelUtils.getPostIdSparkDataFrame(self.spark, risingTable, postsOfInterest, chunkSize=100)
 
     pandasTestDf = self.postIdData.limit(5).toPandas()
     print(pandasTestDf.to_string())
@@ -71,7 +71,7 @@ class Pipeline:
     # if you don't initialize this, you get an error when you try to broadcast the UDF
     postIdData = self.postIdData
     print("Applying transformations to Rising Data...")
-    aggData = utils.applyDataTransformations(postIdData)
+    aggData = modelUtils.applyDataTransformations(postIdData)
     aggData = aggData.toPandas().fillna(0)
 
     # add model name
@@ -180,7 +180,7 @@ class Pipeline:
 
 if __name__ == "__main__":
   threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
-  # modelName = 'models/Reddit_model_GBM_20230503-235329.sav'
+  # modelName = 'models/Reddit_model_20230503-235329_GBM.sav'
 
   # cfg_file = cu.findConfig()
   cfg_file = 's3://data-kennethmyers/reddit.cfg'
@@ -199,7 +199,7 @@ if __name__ == "__main__":
   )
 
   # grab latest model
-  model, modelName = utils.getLatestModel()
+  model, modelName = modelUtils.getLatestModel()
   # model = utils.getModel(modelName)  # alternative, pass a specific model
 
   dynamodb_resource = boto3.resource('dynamodb', region_name='us-east-2')  # higher level abstractions, recommended to use, fewer methods but creating table returns a table object that you can run operations on, can also grab a Table with Table('name')

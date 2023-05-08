@@ -8,7 +8,7 @@ import sys
 import os
 thisLocation = os.getcwd()
 sys.path.append(thisLocation+'/../../model/')  # this is for importing model utils
-import utils
+import modelUtils
 
 
 session = boto3.Session(profile_name='AdministratorAccess', region_name='us-east-2')
@@ -19,10 +19,10 @@ dynamodb_resource = session.resource('dynamodb')  #  higher level abstractions, 
 risingTable = dynamodb_resource.Table('rising')
 
 # find posts in the rising table
-datesToQuery = utils.daysUntilNow()
+datesToQuery = modelUtils.daysUntilNow()
 print("Dates to query:", datesToQuery)
 
-postIdQueryResult = utils.queryByRangeOfDates(risingTable, datesToQuery)  # [{'postId': XXXXXX}, {'postId': YYYYYY}...]
+postIdQueryResult = modelUtils.queryByRangeOfDates(risingTable, datesToQuery)  # [{'postId': XXXXXX}, {'postId': YYYYYY}...]
 postsOfInterest = {res['postId'] for res in postIdQueryResult}
 
 print("Number of posts found:", len(postsOfInterest))
@@ -30,7 +30,7 @@ print("Number of posts found:", len(postsOfInterest))
 # get all data for these posts
 # can be slow due to RCU constraints
 spark = SparkSession.builder.appName('redditData').getOrCreate()
-postIdData = utils.getPostIdSparkDataFrame(spark, risingTable, postsOfInterest)
+postIdData = modelUtils.getPostIdSparkDataFrame(spark, risingTable, postsOfInterest)
 
 # get the error data
 errorData = postIdData.where(F.col('loadTSUTC').cast('long')-F.col('createdTSUTC').cast('long')>(60*60))
