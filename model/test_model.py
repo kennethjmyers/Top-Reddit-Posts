@@ -9,8 +9,10 @@ import schema
 import boto3
 from moto import mock_dynamodb
 import sys
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(TEST_DIR, '../lambdaFunctions/getRedditDataFunction/'))
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(THIS_DIR, '../lambdaFunctions/getRedditDataFunction/'))
+sys.path.append(os.path.join(THIS_DIR, '../'))
+import configUtils as cu
 import tableDefinition
 import pandas as pd
 import json
@@ -24,7 +26,7 @@ os.environ['TZ'] = 'UTC'
 
 @pytest.fixture(scope='module')
 def sampleRisingData():
-  d = pd.read_csv(os.path.join(TEST_DIR, 'test_data.csv'))
+  d = pd.read_csv(os.path.join(THIS_DIR, 'test_data.csv'))
   # we need to change some of the values here so that they can be found by the extract method
   # particularly the load dates have to be within the last hour
   now = datetime.utcnow()
@@ -84,7 +86,7 @@ def spark():
 
 @pytest.fixture(scope='module')
 def model():
-  testFile = os.path.join(TEST_DIR, 'pickledModels/Reddit_model_LR_20230414-061009.sav')
+  testFile = os.path.join(THIS_DIR, 'pickledModels/Reddit_model_LR_20230414-061009.sav')
   return utils.loadModel(modelSaveLoc=testFile)
 
 
@@ -100,8 +102,8 @@ def modelName():
 
 @pytest.fixture(scope='module')
 def cfg():
-  cfg_file = utils.findConfig()
-  cfg = utils.parseConfig(cfg_file)
+  cfg_file = cu.findConfig()
+  cfg = cu.parseConfig(cfg_file)
   return cfg
 
 
@@ -257,8 +259,8 @@ def test_load(aggDataDf, engine, pipeline):
 
 
 if __name__=='__main__':
-  cfg_file = utils.findConfig()
-  cfg = utils.parseConfig(cfg_file)
+  cfg_file = cu.findConfig()
+  cfg = cu.parseConfig(cfg_file)
 
   spark = (
     SparkSession

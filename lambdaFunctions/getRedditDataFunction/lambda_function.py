@@ -1,4 +1,5 @@
 import redditUtils as ru
+import configUtils as cu
 import tableDefinition
 import praw
 import boto3
@@ -10,8 +11,8 @@ dynamodb_resource = boto3.resource('dynamodb')
 def lambda_handler(event, context):
   # Initializations
   subreddit = "pics"
-  cfg_file = ru.findConfig()
-  cfg = ru.parseConfig(cfg_file)
+  cfg_file = cu.findConfig()
+  cfg = cu.parseConfig(cfg_file)
 
   CLIENTID = cfg['CLIENTID']
   CLIENTSECRET = cfg['CLIENTSECRET']

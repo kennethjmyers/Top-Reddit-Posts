@@ -8,6 +8,10 @@ from boto3.dynamodb.conditions import  Key, Attr
 from pyspark.sql import SparkSession
 import pandas as pd
 import sqlUtils as su
+import sys
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(THIS_DIR, '../'))
+import configUtils as cu
 
 
 os.environ['TZ'] = 'UTC'
@@ -177,9 +181,9 @@ if __name__ == "__main__":
   threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
   # modelName = 'models/Reddit_model_GBM_20230503-235329.sav'
 
-  # cfg_file = utils.findConfig()
+  # cfg_file = cu.findConfig()
   cfg_file = 's3://data-kennethmyers/reddit.cfg'
-  cfg = utils.parseConfig(cfg_file)
+  cfg = cu.parseConfig(cfg_file)
 
   spark = (
     SparkSession
