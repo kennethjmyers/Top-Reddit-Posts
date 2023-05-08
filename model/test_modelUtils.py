@@ -1,9 +1,11 @@
 import boto3
-from pyspark.sql import SparkSession
 import modelUtils as mu
 from datetime import datetime, timedelta
 from moto import mock_s3
 import pytest
+import os
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def test_dateToStr():
   d = datetime(2023, 5, 1, 10, 00, 00).date()
@@ -32,9 +34,9 @@ def test_getTarget():
 @mock_s3
 def test_getLatestModel():
   s3 = boto3.client('s3', region_name='us-east-2')
-  file1 = './pickledModels/Reddit_model_20230503-235329_GBM.sav'
+  file1 = os.path.join(THIS_DIR, 'pickledModels/Reddit_model_20230503-235329_GBM.sav')
   file1Name = 'models/Reddit_model_20230503-235329_GBM.sav'
-  file2 = './pickledModels/Reddit_model_20230414-061009_LR.sav'
+  file2 = os.path.join(THIS_DIR, 'pickledModels/Reddit_model_20230414-061009_LR.sav')
   file2Name = 'models/Reddit_model_20230414-061009_LR.sav'
   bucketName = "test-bucket"
   # take this file and put it in the mock bucket
@@ -51,7 +53,7 @@ def test_getLatestModel():
 @mock_s3
 def test_getModel():
   s3 = boto3.client('s3', region_name='us-east-2')
-  localFileName = './pickledModels/test_latestModel.sav'
+  localFileName = os.path.join(THIS_DIR, 'pickledModels/test_latestModel.sav')
   bucketName = "test-bucket"
   fileName = "test-file.sav"
   # take this file and put it in the mock bucket
@@ -60,5 +62,5 @@ def test_getModel():
     s3.upload_fileobj(f, bucketName, fileName)
   from modelUtils import getModel
 
-  getModel(modelName=fileName, bucketName=bucketName, modelSaveLoc='./pickledModels/test_latestModel.sav')
+  getModel(modelName=fileName, bucketName=bucketName, modelSaveLoc=localFileName)
 
