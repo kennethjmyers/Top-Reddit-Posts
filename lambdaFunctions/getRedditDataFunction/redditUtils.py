@@ -1,37 +1,8 @@
 from datetime import datetime
-from configparser import ConfigParser
-import os
 from collections import namedtuple
 import tableDefinition
 import json
 from decimal import Decimal
-
-
-def findConfig() -> str:
-  # searches for main file, falls back to example file if not found
-  fileList = [
-    './reddit.cfg',
-    '../reddit.cfg',
-    '../../reddit.cfg',
-    './example_reddit.cfg',
-    '../example_reddit.cfg',
-    '../../example_reddit.cfg'
-  ]
-  for f in fileList:
-    if os.path.exists(f):
-      return f
-  raise RuntimeError("Reddit config file not found. Place it in either ./ or ../")
-
-
-def parseConfig(cfg_file: str) -> dict:
-  parser = ConfigParser()
-  cfg = dict()
-  _ = parser.read(cfg_file)
-  cfg['CLIENTID'] = parser.get("reddit_api", "CLIENTID")
-  cfg['CLIENTSECRET'] = parser.get("reddit_api", "CLIENTSECRET")
-  cfg['PASSWORD'] = parser.get("reddit_api", "PASSWORD")
-  cfg['USERNAME'] = parser.get("reddit_api", "USERNAME")
-  return cfg
 
 
 def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinition.schema, time_filter=None, verbose=False):

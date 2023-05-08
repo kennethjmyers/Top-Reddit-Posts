@@ -2,6 +2,8 @@
 
 [![codecov](https://codecov.io/gh/kennethjmyers/Top-Reddit-Posts/branch/main/graph/badge.svg?token=ACZEU30AHM)](https://codecov.io/gh/kennethjmyers/Top-Reddit-Posts)
 
+![Python](https://img.shields.io/badge/python-3.7-blue.svg) 
+
 ![](./images/architecture-diagram.png)
 
 ## Purpose
