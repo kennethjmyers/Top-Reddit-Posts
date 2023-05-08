@@ -7,16 +7,20 @@ from pyspark.sql import SparkSession
 import boto3
 from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import udf
-import os
 import argparse
+import sys
+import os
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(THIS_DIR, '../'))
+import configUtils as cu
 
 
 # Forcing Timezone keeps things consistent with running on aws and without it timestamps get additional
 # timezone conversions when writing to parquet. Setting spark timezone was not enough to fix this
 os.environ['TZ'] = 'UTC'
 
-cfg_file = utils.findConfig()
-cfg = utils.parseConfig(cfg_file)
+cfg_file = cu.findConfig()
+cfg = cu.parseConfig(cfg_file)
 
 spark = (
   SparkSession
@@ -25,8 +29,8 @@ spark = (
   .config('spark.driver.extraJavaOptions', '-Duser.timezone=GMT')
   .config('spark.executor.extraJavaOptions', '-Duser.timezone=GMT')
   .config('spark.sql.session.timeZone', 'UTC')
-  .config("fs.s3a.access.key", cfg['ACCESSKEY'])
-  .config("fs.s3a.secret.key", cfg['SECRETKEY'])
+  .config("fs.s3a.access.key", cfg['S3_access']['ACCESSKEY'])
+  .config("fs.s3a.secret.key", cfg['S3_access']['SECRETKEY'])
   .getOrCreate()
 )
 

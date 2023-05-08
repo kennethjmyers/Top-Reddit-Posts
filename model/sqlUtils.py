@@ -13,8 +13,9 @@ def makeEngine(cfg):
   :param cfg: dictionary containing username, password, host, port, and database
   :return: engine
   """
+  sqlcfg = cfg['Postgres']
   return create_engine(
-      f"postgresql+pg8000://{cfg['USERNAME']}:{cfg['PASSWORD']}@{cfg['HOST']}:{cfg['PORT']}/{cfg['DATABASE']}"
+      f"postgresql+pg8000://{sqlcfg['USERNAME']}:{sqlcfg['PASSWORD']}@{sqlcfg['HOST']}:{sqlcfg['PORT']}/{sqlcfg['DATABASE']}"
   )
 
 

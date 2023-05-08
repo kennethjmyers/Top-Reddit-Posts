@@ -4,7 +4,11 @@ import praw
 import tableDefinition
 from collections import namedtuple
 import boto3
+import sys
 import os
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(THIS_DIR, '../../'))
+import configUtils as cu
 
 
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
@@ -12,8 +16,8 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 @pytest.fixture(scope='module')
 def cfg():
-  cfg_file = ru.findConfig()
-  cfg = ru.parseConfig(cfg_file)
+  cfg_file = cu.findConfig()
+  cfg = cu.parseConfig(cfg_file)
   return cfg
 
 
@@ -21,12 +25,13 @@ def cfg():
 def reddit(cfg):
   if IN_GITHUB_ACTIONS:
     pytest.skip(reason="Config not available in Github Actions.")
+  redditcfg = cfg['reddit_api']
   return praw.Reddit(
-    client_id=f"{cfg['CLIENTID']}",
-    client_secret=f"{cfg['CLIENTSECRET']}",
-    password=f"{cfg['PASSWORD']}",
-    user_agent=f"Post Extraction (by u/{cfg['USERNAME']})",
-    username=f"{cfg['USERNAME']}",
+    client_id=f"{redditcfg['CLIENTID']}",
+    client_secret=f"{redditcfg['CLIENTSECRET']}",
+    password=f"{redditcfg['PASSWORD']}",
+    user_agent=f"Post Extraction (by u/{redditcfg['USERNAME']})",
+    username=f"{redditcfg['USERNAME']}",
   )
 
 
@@ -138,10 +143,11 @@ if __name__=='__main__':
   cfg_file = ru.findConfig()
   cfg = ru.parseConfig(cfg_file)
 
-  CLIENTID = cfg['CLIENTID']
-  CLIENTSECRET = cfg['CLIENTSECRET']
-  PASSWORD = cfg['PASSWORD']
-  USERNAME = cfg['USERNAME']
+  redditcfg = cfg['reddit_api']
+  CLIENTID = redditcfg['CLIENTID']
+  CLIENTSECRET = redditcfg['CLIENTSECRET']
+  PASSWORD = redditcfg['PASSWORD']
+  USERNAME = redditcfg['USERNAME']
 
   reddit = praw.Reddit(
     client_id=f"{CLIENTID}",
