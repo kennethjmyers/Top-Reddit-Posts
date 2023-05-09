@@ -3,6 +3,11 @@ from collections import namedtuple
 import tableDefinition
 import json
 from decimal import Decimal
+import pickle
+
+
+def saveTestReddit(reddit, filename):
+  pickle.dump(reddit, open(filename, 'wb'))
 
 
 def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinition.schema, time_filter=None, verbose=False):
