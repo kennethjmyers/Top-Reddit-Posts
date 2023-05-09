@@ -38,7 +38,12 @@ It is easy to see how advantageous it can be to find future viral posts before t
 
 ### Results
 
-When I started using the bot, my account of 12 years had 11,700 karma. After two days of testing I had grown that to >13,000 karma, an 11% increase and over 500 karma each day. User results can vary, however, as it requires continuous user monitoring for new notifications and is dependent upon the user's replies and understanding of Reddit and the subreddits' userbases.
+When I started using the bot, my account of 12 years had 11,700(8,800) total(comment) karma. After 10 days I had increased this to over 24,000(21,300) karma, a 107(142)% increase. To reiterate, **I doubled my total karma of 12 years in just 10 days**.
+
+![](./images/Karma_pct_Growth_vs_Day.png)
+ 
+ User results can vary, however, as it requires the user to be available when new notifications arrive and is dependent upon the user's replies and understanding of Reddit and the subreddits' rules and userbases.
+
 
 [Plan to add monitoring results here once implemented]
 
