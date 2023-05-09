@@ -90,7 +90,7 @@ class TestBatchWriter:
     self.columns = self.schema.keys()
     self.Row = namedtuple("Row", self.columns)
 
-  @pytest.mark.xfail(reason="BatchWriter can't accept duplicate keys")
+  @pytest.mark.xfail(reason="BatchWriter fails on duplicate keys. This might xpass, possibly a fault in mock object.")
   def test_duplicateData(self):
     self.classSetUp()
     testTable = self.testTable
@@ -144,30 +144,3 @@ class TestBatchWriter:
     from redditUtils import batchWriter
     batchWriter(table=testTable, data=data, schema=schema)
     print("diffPrimaryIndexSameSecondIndexTester test complete")
-
-
-if __name__=='__main__':
-  cfg_file = ru.findConfig()
-  cfg = ru.parseConfig(cfg_file)
-
-  redditcfg = cfg['reddit_api']
-  CLIENTID = redditcfg['CLIENTID']
-  CLIENTSECRET = redditcfg['CLIENTSECRET']
-  PASSWORD = redditcfg['PASSWORD']
-  USERNAME = redditcfg['USERNAME']
-
-  reddit = praw.Reddit(
-    client_id=f"{CLIENTID}",
-    client_secret=f"{CLIENTSECRET}",
-    password=f"{PASSWORD}",
-    user_agent=f"Post Extraction (by u/{USERNAME})",
-    username=f"{USERNAME}",
-  )
-
-  #data = test_getRedditData(reddit)
-  tbw = TestBatchWriter()
-  #tbw.duplicateDataTester()
-  tbw.test_uniqueData()
-  tbw.test_diffPrimaryIndexSameSecondIndex()
-  test_deduplicateRedditData()
-
