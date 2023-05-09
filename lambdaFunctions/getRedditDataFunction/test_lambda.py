@@ -26,7 +26,7 @@ def cfg():
 @pytest.fixture(scope='module')
 def reddit(cfg):
   if IN_GITHUB_ACTIONS:
-    return pickle.load(open('test_reddit.sav', 'rb'))
+    return pickle.load(open(os.path.join(THIS_DIR, 'test_reddit.sav'), 'rb'))
   redditcfg = cfg['reddit_api']
   return praw.Reddit(
     client_id=f"{redditcfg['CLIENTID']}",
