@@ -256,25 +256,3 @@ def test_load(aggDataDf, engine, pipeline):
   aggData = pipeline.filterExistingData(data=aggData)
   viralData = aggData[aggData['stepUp'] == 1]
   pipeline.load(data=viralData, tableName='scoredData')
-
-
-if __name__=='__main__':
-  cfg_file = cu.findConfig()
-  cfg = cu.parseConfig(cfg_file)
-
-  spark = (
-    SparkSession
-      .builder
-      .appName('redditData')
-      .config('spark.driver.extraJavaOptions', '-Duser.timezone=GMT')
-      .config('spark.executor.extraJavaOptions', '-Duser.timezone=GMT')
-      .config('spark.sql.session.timeZone', 'UTC')
-      .config("fs.s3a.access.key", cfg['S3_access']['ACCESSKEY'])
-      .config("fs.s3a.secret.key", cfg['S3_access']['SECRETKEY'])
-      .getOrCreate()
-  )
-
-  # grab latest model
-  model=mu.getLatestModel()
-
-  #test_Pipeline(model, spark, threshold=0.0400)
