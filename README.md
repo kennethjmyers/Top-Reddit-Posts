@@ -38,7 +38,7 @@ It is easy to see how advantageous it can be to find future viral posts before t
 
 ### Results
 
-When I started using the bot, my account of 12 years had 11,700(8,800) total(comment) karma. After 10 days I had increased this to over 24,000(21,300) karma, a 107(142)% increase. To reiterate, I doubled my total karma of 12 years in just 10 days.
+When I started using the bot, my account of 12 years had 11,700(8,800) total(comment) karma. After 10 days I had increased this to over 24,000(21,300) karma, a 107(142)% increase. To reiterate, **I doubled my total karma of 12 years in just 10 days**.
 
 ![](./images/Karma_pct_Growth_vs_Day.png)
  
