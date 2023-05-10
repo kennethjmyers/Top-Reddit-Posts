@@ -216,7 +216,7 @@ scripts/zippedPythonPackages/*
 scripts/zippedLambdaFunction/*
 !scripts/zippedLambdaFunction/.gitkeep
 
-*reddit.cfg
+*reddit*.cfg
 !example_reddit.cfg
 
 model/pickledModels/latestModel.sav
