@@ -225,7 +225,7 @@ def test_filterExistingData(aggDataDf, engine, pipeline):
     pytest.skip("No engine")
   aggData = pipeline.createPredictions(aggDataDf)
   aggData = pipeline.markStepUp(aggData)
-  aggData = pipeline.filterExistingData(data=aggData)
+  aggData = pipeline.filterPreviousViralData(data=aggData)
   print(f"Data count after filtering existing data: {len(aggData)}")
 
 
@@ -253,6 +253,6 @@ def test_load(aggDataDf, engine, pipeline):
     pytest.skip("No engine")
   aggData = pipeline.createPredictions(aggDataDf)
   aggData = pipeline.markStepUp(aggData)
-  aggData = pipeline.filterExistingData(data=aggData)
+  aggData = pipeline.filterPreviousViralData(data=aggData)
   viralData = aggData[aggData['stepUp'] == 1]
   pipeline.load(data=viralData, tableName='scoredData')

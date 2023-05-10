@@ -47,10 +47,11 @@ class Pipeline:
 
     risingTable = self.dynamodb_resource.Table('rising')
 
+    # the KeyConditionExpression is not perfect, misses some data around midnight
     postIdQueryResult = risingTable.query(
       IndexName='byLoadDate',
       KeyConditionExpression=Key('loadDateUTC').eq(fifteenMinAgoDate) & Key('loadTimeUTC').gte(fifteenMinAgoTime),
-      FilterExpression=Attr('timeElapsedMin').gte(45),
+      # FilterExpression=Attr('timeElapsedMin').gte(45),  I removed this because I want to make the model able to predict at any time in the first ~hour
       ProjectionExpression='postId'
     )
     postIdQueryItems = postIdQueryResult['Items']
@@ -85,11 +86,12 @@ class Pipeline:
     # filter out data we've seen but the decision hasn't changed
     print("filter out existing data")
     if filterExistingData and len(aggData) > 0:
-      aggData = self.filterExistingData(data=aggData)
-      print(f"Data count after filtering existing data: {len(aggData)}")
+      aggData = self.filterPreviousViralData(data=aggData)
+      print(f"Data count after filtering previously found viral data: {len(aggData)}")
 
     # subset to viral data
     viralData = aggData[aggData['stepUp'] == 1]
+    print(f"Amount of viral data: {len(viralData)}")
 
     # notify the user about this data
     pipeline.notifyUserAboutViralPosts(viralData)
@@ -110,7 +112,7 @@ class Pipeline:
     if len(data) < 1:
       print("No data to write to postgres")
       return
-    print("Writing to postgres")
+    print(f"Writing {len(data)} lines to postgres")
     engine = self.engine
     data = data.set_index(['postId'])
     with engine.connect() as conn:
@@ -134,10 +136,16 @@ class Pipeline:
     aggData['stepUp'] = aggData['predict_proba_1'].apply(lambda x: 1 if x >= self.threshold else 0)
     return aggData
 
-  def filterExistingData(self, data):
+  def filterPreviousViralData(self, data):
+    """
+    We don't want to notify for data that was already marked data, so remove it.
+    But we can update the data that is not viral and has been re-scored.
+    :param data: The aggregated data
+    :return: The data after filtering out previously viral data
+    """
     engine = self.engine
     postIds = list(data['postId'])
-    sql = f"""select "postId", "stepUp", 1 as "matchFound" from public."scoredData" where "postId" in ('{"','".join(postIds)}')"""
+    sql = f"""select "postId", "stepUp", 1 as "matchFound" from public."scoredData" where "postId" in ('{"','".join(postIds)}') and "stepUp" = 1"""
     with engine.connect() as conn:
       result = pd.read_sql(sql=sql, con=conn)
     # join data together
@@ -163,9 +171,15 @@ class Pipeline:
 
     viralDataString = "Found potentially viral post(s):"
     for i in range(len(viralData)):
-      thisPostId = viralData.iloc[i]['postId']
-      thisPostScore = viralData.iloc[i]['predict_proba_1']
-      viralDataString += f"\n\thttps://reddit.com/{thisPostId}\n\t\tscore={thisPostScore:.04f}"
+      thisData = viralData.iloc[i]
+      thisPostId = thisData['postId']
+      thisUpvotes = thisData['maxScore41_60m']
+      thisReplies = thisData['maxNumComments41_60m']
+      thisPostScore = thisData['predict_proba_1']
+      viralDataString += f"""
+  https://reddit.com/{thisPostId}
+    score={thisPostScore:.04f}
+    :arrow_up: {thisUpvotes} | :speech_balloon: {thisReplies}"""
     viralDataString += f"\nthreshold = {self.threshold:.04f}"
 
     # Discord - message user
@@ -173,13 +187,15 @@ class Pipeline:
     du.discordMessageHandler(discordcfg['BOTTOKEN'], dm['id'], viralDataString)
 
     # Discord - message channel
-    du.discordMessageHandler(discordcfg['BOTTOKEN'], discordcfg['CHANNELSNOWFLAKEID'], viralDataString)
+    for channelSnowflakeId in discordcfg['CHANNELSNOWFLAKEID']:
+      du.discordMessageHandler(discordcfg['BOTTOKEN'], channelSnowflakeId, viralDataString)
 
+    print(f"Completed notifying via Discord")
     return
 
 
 if __name__ == "__main__":
-  threshold = 0.12965  # eventually will probably put this in its own config file, maybe it differs per subreddit
+  threshold = 0.29412  # eventually will probably put this in its own config file, maybe it differs per subreddit
   # modelName = 'models/Reddit_model_20230503-235329_GBM.sav'
 
   # cfg_file = cu.findConfig()

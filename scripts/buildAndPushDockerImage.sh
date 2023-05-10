@@ -18,9 +18,14 @@ chmod +x PredictETL.py
 # make it so we can write the latest model from S3 to the pickledModels directory
 chmod -R +w pickledModels/
 
-# build the
+# build the environment image
 echo "Building predict-etl-packages image"
 docker build -t predict-etl-packages:latest -f ./Dockerfile.packages .
+
+# copy configUtils, wasn't needed for the environment image
+cp ../configUtils.py .
+
+# build the predict-etl image
 echo "Building predict-etl image"
 docker build -t predict-etl:latest -f ./Dockerfile .
 
@@ -28,3 +33,6 @@ docker build -t predict-etl:latest -f ./Dockerfile .
 aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${account_number}.dkr.ecr.us-east-2.amazonaws.com
 docker tag predict-etl:latest ${account_number}.dkr.ecr.us-east-2.amazonaws.com/predict-etl:latest
 docker push ${account_number}.dkr.ecr.us-east-2.amazonaws.com/predict-etl:latest
+
+# remove configUtils
+rm ./configUtils.py

@@ -13,7 +13,7 @@ def lambda_handler(event, context):
   subreddits = ["pics", "memes", "gaming", "worldnews", "news", "aww", "funny", "todayilearned", "movies"]
 
   # cfg_file = cu.findConfig()
-  cfg_file = 's3://data-kennethmyers/reddit2.cfg'
+  cfg_file = 's3://data-kennethmyers/reddit.cfg'
   cfg = cu.parseConfig(cfg_file)
 
   CLIENTID = cfg['reddit_api']['CLIENTID']
