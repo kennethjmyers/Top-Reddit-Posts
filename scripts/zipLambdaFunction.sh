@@ -1,5 +1,6 @@
+#!/bin/bash
 # This is meant to zip a lambda function with the reddit config
-# use: sh zipLambdaFunction.sh -f someFunction
+# use: zipLambdaFunction.sh -f someFunction
 # saves zip to zippedLambdaFunction/someFunction.zip
 
 # based on https://www.linkedin.com/pulse/add-external-python-libraries-aws-lambda-using-layers-gabe-olokun/
@@ -17,7 +18,7 @@ echo "lambda function: $function_name";
 cd ./zippedLambdaFunction/
 rm -r ./${function_name}
 cp -r ../../lambdaFunctions/${function_name} ./  # copy lambda function files here
-cp ../../reddit.cfg ./${function_name}/  # copy config into function files
+# cp ../../reddit.cfg ./${function_name}/  # copy config into function files
 cp ../../configUtils.py ./${function_name}/  # copy configUtils here
 rm -rf ${function_name}.zip # remove first if it exists
 cd ./${function_name}/  # for some reason you have to zip from within this folder or it wont work, it otherwise wraps it in another folder
