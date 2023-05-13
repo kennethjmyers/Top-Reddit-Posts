@@ -44,6 +44,7 @@ aggDataSparkSchema = StructType([
   StructField("subreddit",StringType(),False),
   StructField("title",StringType(),False),
   StructField("createdTSUTC", TimestampType(), False),
+  StructField("timeElapsedMin", IntegerType(), False),
   StructField("maxScore20m", IntegerType(), False),
   StructField("maxScore21_40m", IntegerType(), False),
   StructField("maxScore41_60m", IntegerType(), False),
