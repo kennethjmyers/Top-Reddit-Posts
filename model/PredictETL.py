@@ -173,13 +173,14 @@ class Pipeline:
     for i in range(len(viralData)):
       thisData = viralData.iloc[i]
       thisPostId = thisData['postId']
-      thisUpvotes = thisData['maxScore41_60m']
-      thisReplies = thisData['maxNumComments41_60m']
+      thisUpvotes = int(thisData['maxScore41_60m'])
+      thisReplies = int(thisData['maxNumComments41_60m'])
       thisPostScore = thisData['predict_proba_1']
+      thisTimeElapsedMin = thisData['timeElapsedMin']
       viralDataString += f"""
   https://reddit.com/{thisPostId}
     score={thisPostScore:.04f}
-    :arrow_up: {thisUpvotes} | :speech_balloon: {thisReplies}"""
+    :arrow_up: {thisUpvotes} | :speech_balloon: {thisReplies} | :clock10: {thisTimeElapsedMin}"""
     viralDataString += f"\nthreshold = {self.threshold:.04f}"
 
     # Discord - message user

@@ -125,9 +125,10 @@ def getPostIdPdDataFrame(table, postIds: set, chunkSize=10, flatten: bool = True
 def applyDataTransformations(postIdData):
   return (
     postIdData
-      .groupBy('postId', 'subreddit', 'title', 'createdTSUTC')
+      .groupBy('postId', 'subreddit', 'title', 'createdTSUTC',)
       .agg(
-      F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('score'))).alias('maxScore20m')
+      F.max(F.col('timeElapsedMin')).alias('maxTimeElapsedMin')  # wasn't sure on the alias ordering here but did not want it confusing other operations
+      , F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('score'))).alias('maxScore20m')
       , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('score'))).alias('maxScore21_40m')
       , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('score'))).alias('maxScore41_60m')
       , F.max(F.when(F.col('timeElapsedMin') <= 20, F.col('numComments'))).alias('maxNumComments20m')
@@ -140,6 +141,7 @@ def applyDataTransformations(postIdData):
       , F.max(F.when(F.col('timeElapsedMin').between(21, 40), F.col('numGildings'))).alias('maxNumGildings21_40m')
       , F.max(F.when(F.col('timeElapsedMin').between(41, 60), F.col('numGildings'))).alias('maxNumGildings41_60m')
     )
+    .withColumnRenamed('maxTimeElapsedMin', 'timeElapsedMin')
     .withColumn("maxScoreGrowth21_40m41_60m",
                 (F.col('maxScore41_60m') - F.col('maxScore21_40m')) / F.col('maxScore21_40m'))
     .withColumn("maxNumCommentsGrowth21_40m41_60m",
