@@ -56,10 +56,12 @@ def duplicatedData():
   Row = namedtuple("Row", columns)
   # these are identical examples except one has a later loadTSUTC
   return [
-    Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
+    Row(subscribers=10000000, activeUsers=10000,
+        loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
         subreddit='pics', title='Magnolia tree blooming in my friends yard', createdTSUTC='2023-04-30 04:19:43',
         timeElapsedMin=44, score=3, numComments=0, upvoteRatio=1.0, numGildings=0),
-    Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:06:44', postId='133fkqz',
+    Row(subscribers=10000000, activeUsers=10000,
+        loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:06:44', postId='133fkqz',
         subreddit='pics', title='Magnolia tree blooming in my friends yard', createdTSUTC='2023-04-30 04:19:43',
         timeElapsedMin=44, score=3, numComments=0, upvoteRatio=1.0, numGildings=0)
   ]
@@ -116,10 +118,12 @@ class TestBatchWriter:
     Row = self.Row
 
     data = [
-      Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
+      Row(subscribers=10000000, activeUsers=10000,
+          loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
           subreddit='pics', title='Magnolia tree blooming in my friends yard', createdTSUTC='2023-04-30 04:19:43',
           timeElapsedMin=44, score=3, numComments=0, upvoteRatio=1.0, numGildings=0),
-      Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fqj7',
+      Row(subscribers=10000000, activeUsers=10000,
+          loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fqj7',
           subreddit='pics', title='A piece of wood sticking up in front of a fire.', createdTSUTC='2023-04-30 04:29:23',
           timeElapsedMin=34, score=0, numComments=0, upvoteRatio=0.4, numGildings=0)
     ]
@@ -134,10 +138,12 @@ class TestBatchWriter:
     Row = self.Row
 
     data = [
-      Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
+      Row(subscribers=10000000, activeUsers=10000,
+          loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqz',
           subreddit='pics', title='Magnolia tree blooming in my friends yard', createdTSUTC='2023-04-30 04:19:43',
           timeElapsedMin=44, score=3, numComments=0, upvoteRatio=1.0, numGildings=0),
-      Row(loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqy',
+      Row(subscribers=10000000, activeUsers=10000,
+          loadDateUTC='2023-04-30', loadTimeUTC='05:03:44', loadTSUTC='2023-04-30 05:03:44', postId='133fkqy',
           subreddit='pics', title='Magnolia tree blooming in my friends yard', createdTSUTC='2023-04-30 04:19:43',
           timeElapsedMin=44, score=3, numComments=0, upvoteRatio=1.0, numGildings=0)
     ]
