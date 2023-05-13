@@ -25,20 +25,27 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinit
   """
   assert topN <= 25  # some, like rising, cap out at 25 and this also is to limit data you're working with
   assert view in {'rising', 'top' , 'hot'}
+  topN += 2  # increment by 2 because of sticky posts
   if view == 'top':
     assert time_filter in {"all", "day", "hour", "month", "week", "year"}
+  subredditObject = reddit.subreddit(subreddit)
   if view == 'rising':
-    topN = reddit.subreddit(subreddit).rising(limit=topN)
+    topNposts = subredditObject.rising(limit=topN)
   elif view == 'hot':
-    topN = reddit.subreddit(subreddit).hot(limit=topN)
+    topNposts = subredditObject.hot(limit=topN)
   elif view == 'top':
-    topN = reddit.subreddit(subreddit).top(time_filter=time_filter, limit=topN)
+    topNposts = subredditObject.top(time_filter=time_filter, limit=topN)
 
   now = datetime.utcnow().replace(tzinfo=None, microsecond=0)
   columns = schema.keys()
   Row = namedtuple("Row", columns)
   dataCollected = []
-  for submission in topN:
+  subscribers = subredditObject.subscribers
+  activeUsers = subredditObject.accounts_active
+  print(f'\tSubscribers: {subscribers}\n\tActive users: {activeUsers}')
+  for submission in topNposts:
+    if submission.stickied:
+      continue  # skip stickied posts
     createdTSUTC = datetime.utcfromtimestamp(submission.created_utc)
     timeSincePost = now - createdTSUTC
     timeElapsedMin = timeSincePost.seconds // 60
@@ -53,7 +60,8 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinit
     gildings = submission.gildings
     numGildings = sum(gildings.values())
     row = Row(
-      postId=postId, subreddit=subreddit, title=title, createdTSUTC=str(createdTSUTC),
+      postId=postId, subreddit=subreddit, subscribers=subscribers, activeUsers=activeUsers,
+      title=title, createdTSUTC=str(createdTSUTC),
       timeElapsedMin=timeElapsedMin, score=score, numComments=numComments,
       upvoteRatio=upvoteRatio, numGildings=numGildings,
       loadTSUTC=str(now), loadDateUTC=str(now.date()), loadTimeUTC=str(now.time()))
@@ -61,7 +69,7 @@ def getRedditData(reddit, subreddit, topN=25, view='rising', schema=tableDefinit
     if verbose:
       print(row)
       print()
-  return dataCollected
+  return dataCollected[:topN-2]
 
 
 def deduplicateRedditData(data):
