@@ -2,6 +2,7 @@
 # This is meant to zip a lambda function with the reddit config
 # use: zipLambdaFunction.sh -f someFunction
 # saves zip to zippedLambdaFunction/someFunction.zip
+set -e
 
 # based on https://www.linkedin.com/pulse/add-external-python-libraries-aws-lambda-using-layers-gabe-olokun/
 while getopts f: flag
@@ -16,7 +17,7 @@ echo "lambda function: $function_name";
 [ -d "../lambdaFunctions/${function_name}" ] && echo "Directory ../lambdaFunctions/${function_name} exists." || { echo "Error: Directory ../lambdaFunctions/${function_name} does not exist."; exit 1; }
 
 cd ./zippedLambdaFunction/
-rm -r ./${function_name}
+rm -r ./${function_name} || true
 cp -r ../../lambdaFunctions/${function_name} ./  # copy lambda function files here
 # cp ../../reddit.cfg ./${function_name}/  # copy config into function files
 cp ../../configUtils.py ./${function_name}/  # copy configUtils here

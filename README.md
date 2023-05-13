@@ -45,14 +45,25 @@ When I started using the bot, my account of 12 years had 11,700(8,800) total(com
  User results can vary, however, as it requires the user to be available when new notifications arrive and is dependent upon the user's replies and understanding of Reddit and the subreddits' rules and userbases.
 
 
-[Plan to add monitoring results here once implemented]
+#### Performance Monitoring
 
-## Requirements
+Performance monitoring is not yet a live process but can be found in the [monitoring notebook](model/Monitoring.ipynb).
+
+![](./images/monitoring-precisions-recalls20230512.png)
+
+The above plot shows precisions and recalls for various subreddits that the model has been operating on. The current version of the model was only trained on r/pics, as such it tends to perform the best there with about 45% recall and >80% precision. This is inline with the step up threshold, top 1%, that was selected. However, it performs worse for the other subreddits due to different subscriber sizes and activity levels. Data collection has been updated to plan for the next version of the model which will account for these variables. 
+
+Furthermore, the next version of the model will attempt to be more flexible to the time of prediction. The current model mainly relies on the 40-60 minute time block and most predictions only come in during the last 10 minutes of a post's first hour. But often these posts already have dozens or, in rare cases, hundreds of comments so the model must become more agile for this.
+
+
+## More Information
+
+### Requirements
 
 1. python == 3.7 (I have not tested this on other versions and can not guarantee it will work)
 2. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-## Components
+### Components
 
 1. Check out the [Getting Started](https://github.com/kennethjmyers/Top-Reddit-Posts/wiki/Getting-Started) section of the wiki for setting up your AWS account and local environment.
 2. [Lambda function](./lambdaFunctions/getRedditDataFunction/) to collect data and store in DynamoDB. See [the Wiki](https://github.com/kennethjmyers/Top-Reddit-Posts/wiki/Lambda-Function---getRedditDataFunction) for setup instructions.
@@ -62,7 +73,7 @@ When I started using the bot, my account of 12 years had 11,700(8,800) total(com
     3. Model data and Model stored on S3.
 4. [Docker image](model/Dockerfile) hosted on ECR and deployed on ECS via Fargate that automates [prediction ETL process](model/PredictETL.py), stage predicted results to Postgres database on RDS and send notifications via Discord to the user.
 
-## A Note on Costs
+### A Note on Costs
 
 This project tries to maximize the variety of tools to use in AWS while keeping costs low, particularly on the AWS Free Tier. 
 
