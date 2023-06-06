@@ -38,9 +38,11 @@ It is easy to see how advantageous it can be to find future viral posts before t
 
 ### Results
 
-When I started using the bot, my account of 12 years had 11,700(8,800) total(comment) karma. After 10 days I had increased this to over 24,000(21,300) karma, a 107(142)% increase. To reiterate, **I doubled my total karma of 12 years in just 10 days**.
+When I started using the bot, my account of 12 years had 8,800 comment karma. For the first 10 days the model only predicted on r/pics posts and in those 10 days I had increased my comment karma to over 21,300, a 142% increase. To reiterate, **I more than doubled my comment karma of 12 years in just 10 days**.
 
-![](./images/Karma_pct_Growth_vs_Day.png)
+On the 10th day I expanded the model to 8 more of the top subreddits (though the model had not been trained on these) and I used this regularly for days 10-20. During this time **I was averaging about 5,000 karma per day**. Used continuously this would be about 150k karma per month and 1.8MM karma/year. On multiple occasions my replies were given Reddit awards (which was also not something I'd received in the past) and I was given "achievement" flairs for being in the top 1% of karma earners.
+
+![](./images/Karma_growth_vs_day.png)
  
  User results can vary, however, as it requires the user to be available when new notifications arrive and is dependent upon the user's replies and understanding of Reddit and the subreddits' rules and userbases.
 
